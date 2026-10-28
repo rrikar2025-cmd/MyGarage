@@ -1,0 +1,47 @@
+[
+  {
+    "name": "flat",
+    "response": "49 02 01 31 48 47 43 4D 38 32 36 33 33 41 30 30 34 33 35 32",
+    "expected": "1HGCM82633A004352"
+  },
+  {
+    "name": "ELM indexed",
+    "response": "014\n0: 49 02 01 31 48 47\n1: 43 4D 38 32 36 33 33\n2: 41 30 30 34 33 35 32",
+    "expected": "1HGCM82633A004352"
+  },
+  {
+    "name": "ISO TP",
+    "response": "7E8 10 14 49 02 01 31 48 47\n7E8 21 43 4D 38 32 36 33 33\n7E8 22 41 30 30 34 33 35 32",
+    "expected": "1HGCM82633A004352"
+  },
+  {
+    "name": "bad sequence",
+    "response": "7E8 10 14 49 02 01 31 48 47\n7E8 23 43 4D 38 32 36 33 33\n7E8 22 41 30 30 34 33 35 32",
+    "expected": ""
+  },
+  {
+    "name": "incomplete",
+    "response": "49 02 01 31 48 47",
+    "expected": ""
+  },
+  {
+    "name": "NO DATA",
+    "response": "NO DATA",
+    "expected": ""
+  },
+  {
+    "name": "ambiguous ECUs",
+    "response": "7E8 49 02 01 31 48 47 43 4D 38 32 36 33 33 41 30 30 34 33 35 32\n7E9 49 02 01 31 48 47 43 4D 38 32 36 33 33 41 30 30 34 33 35 33",
+    "expected": ""
+  },
+  {
+    "name": "invalid characters",
+    "response": "49 02 01 49 48 47 43 4D 38 32 36 33 33 41 30 30 34 33 35 32",
+    "expected": ""
+  },
+  {
+    "name": "J1850 numbered chunks with filler",
+    "response": "49 02 01 00 00 00 31\n49 02 02 48 47 43 4D\n49 02 03 38 32 36 33\n49 02 04 33 41 30 30\n49 02 05 34 33 35 32",
+    "expected": "1HGCM82633A004352"
+  }
+]

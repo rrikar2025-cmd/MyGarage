@@ -1,0 +1,62 @@
+html {
+  color-scheme: light;
+  scrollbar-color: #52666c #f1f4f3;
+  scrollbar-width: auto;
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
+  scrollbar-color: #acbfbe #101d22;
+}
+* {
+  box-sizing: border-box;
+}
+:focus-visible {
+  outline: 3px solid #23796c;
+  outline-offset: 3px;
+}
+html[data-theme='dark'] :focus-visible {
+  outline-color: #8edcc5;
+}
+[role='button']:not([aria-disabled='true']),
+button:not(:disabled),
+[role='radio'] {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  [role='button']:not([aria-disabled='true']):hover,
+  button:not(:disabled):hover {
+    filter: brightness(0.94);
+  }
+}
+textarea {
+  resize: none;
+}
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #52666c;
+  border: 3px solid #f1f4f3;
+  border-radius: 8px;
+}
+html[data-theme='dark'] *::-webkit-scrollbar-thumb {
+  background: #acbfbe;
+  border-color: #101d22;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (forced-colors: active) {
+  html {
+    scrollbar-color: auto;
+  }
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

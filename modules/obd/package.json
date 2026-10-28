@@ -1,0 +1,7 @@
+{
+  "name": "obd",
+  "version": "0.1.0",
+  "description": "Local OBD scanner Expo module for DriveSpecX",
+  "main": "src/index.ts",
+  "private": true
+}

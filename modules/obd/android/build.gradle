@@ -1,0 +1,25 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.obd'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.obd"
+  compileSdkVersion rootProject.ext.compileSdkVersion
+
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion
+    versionCode 1
+    versionName "0.1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+  testImplementation "junit:junit:4.13.2"
+}

@@ -1,0 +1,14 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src"],
+  "locale": "uk-UA",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Form", "CRUD", "Toast"],
+  "commands": {
+    "unit": "npm test",
+    "typecheck": "npm run typecheck",
+    "build": "npm run export:web"
+  },
+  "requiredCommands": ["unit", "typecheck", "build"],
+  "evidence": { "crudFullFlow": "tests/browser-report.md", "failurePaths": "tests/domain.test.ts" }
+}
