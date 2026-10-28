@@ -49,6 +49,7 @@ export function RootNavigator() {
         <Stack.Screen name="auth/password" />
         <Stack.Screen name="account-delete" />
         <Stack.Screen name="reports" />
+        <Stack.Screen name="attachments/[kind]/[id]" />
         <Stack.Screen name="service" />
         <Stack.Screen name="telemetry" />
         <Stack.Screen name="telemetry-settings" />

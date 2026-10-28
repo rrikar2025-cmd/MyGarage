@@ -1,13 +1,15 @@
 import { useId } from 'react';
-import { useTheme, radius } from '@/shared/theme';
+import { useTheme, radius, fonts } from '@/shared/theme';
 export function Choice<T extends string>({
   label,
   value,
   options,
   onChange,
   disabled,
+  layout = 'list',
 }: {
   disabled?: boolean;
+  layout?: 'list' | 'grid';
   label: string;
   value: T;
   options: { value: T; label: string }[];
@@ -18,7 +20,15 @@ export function Choice<T extends string>({
   return (
     <fieldset
       aria-label={label}
-      style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 4, minWidth: 0 }}
+      style={{
+        border: 0,
+        padding: 0,
+        margin: 0,
+        display: 'grid',
+        gap: 4,
+        minWidth: 0,
+        gridTemplateColumns: layout === 'grid' ? 'repeat(auto-fit,minmax(130px,1fr))' : undefined,
+      }}
     >
       {options.map((option) => (
         <label
@@ -34,6 +44,7 @@ export function Choice<T extends string>({
             color: colors.text,
             backgroundColor: value === option.value ? colors.inset : 'transparent',
             cursor: disabled ? 'default' : 'pointer',
+            fontFamily: fonts.body,
             fontSize: 16,
             lineHeight: '24px',
             fontWeight: value === option.value ? 600 : 400,

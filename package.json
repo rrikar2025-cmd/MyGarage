@@ -1,6 +1,6 @@
 {
   "name": "my-garage",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -15,8 +15,8 @@
     "export:web": "expo export --platform web",
     "android:release": "node scripts/build-android-release.mjs",
     "preview": "node scripts/preview.mjs",
-    "format": "prettier --write app src tests scripts app.config.ts *.json *.md locales plugins modules/obd/src",
-    "format:check": "prettier --check app src tests scripts app.config.ts *.json *.md locales plugins modules/obd/src",
+    "format": "prettier --write app src tests scripts app.config.ts *.json *.md locales plugins modules/obd/src supabase/functions supabase/*.md",
+    "format:check": "prettier --check app src tests scripts app.config.ts *.json *.md locales plugins modules/obd/src supabase/functions supabase/*.md",
     "postexport:web": "node scripts/verify-export-config.mjs"
   },
   "dependencies": {
@@ -31,8 +31,11 @@
     "expo-dev-client": "~6.0.21",
     "expo-file-system": "~19.0.24",
     "expo-font": "~14.0.12",
+    "expo-image-manipulator": "~14.0.8",
+    "expo-image-picker": "~17.0.11",
     "expo-linking": "~8.0.12",
     "expo-localization": "~17.0.8",
+    "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.24",
     "expo-secure-store": "~15.0.8",
     "expo-sharing": "~14.0.8",

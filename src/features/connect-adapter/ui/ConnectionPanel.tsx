@@ -9,20 +9,30 @@ import {
   disconnectAdapter,
   useOBD,
   type OBDDevice,
+  describeConnectionFailure,
+  isLikelyOBDName,
+  bleDeviceName,
 } from '@/entities/obd';
 import { Button, Card, Text, Notice, Icon } from '@/shared/ui';
-import { useTranslation } from '@/shared/i18n';
+import { useTranslation, type MessageKey } from '@/shared/i18n';
 import { useTheme } from '@/shared/theme';
 export function ConnectionPanel() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const status = useOBD((s) => s.status);
   const deviceName = useOBD((s) => s.deviceName);
+  const [showAll, setShowAll] = useState(false);
   const [devices, setDevices] = useState<OBDDevice[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [error, setError] = useState<'bluetoothError' | 'connectError' | null>(null);
+  const [error, setError] = useState<MessageKey | null>(null);
   const epoch = useRef(0);
+  const connectionAttempt = useRef(0),
+    connectionLock = useRef(false);
+  const [failureCode, setFailureCode] = useState<string | null>(null);
+  const likelyDevices = devices.filter((device) => isLikelyOBDName(device.name));
+  const visibleDevices = showAll ? devices : likelyDevices;
+  const hiddenCount = devices.length - likelyDevices.length;
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -30,6 +40,7 @@ export function ConnectionPanel() {
     });
     return () => {
       ++epoch.current;
+      ++connectionAttempt.current;
       stop.current?.();
       subscription.remove();
     };
@@ -37,7 +48,9 @@ export function ConnectionPanel() {
   async function search() {
     const current = ++epoch.current;
     setError(null);
+    setFailureCode(null);
     setDevices([]);
+    setShowAll(false);
     setSearching(true);
     setSearched(false);
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -80,12 +93,35 @@ export function ConnectionPanel() {
     }
   }
   async function connect(device: OBDDevice) {
+    if (connectionLock.current) return;
+    connectionLock.current = true;
+    const attempt = ++connectionAttempt.current;
     stop.current?.();
     setError(null);
+    setFailureCode(null);
     try {
       await connectAdapter(device);
+    } catch (failure) {
+      if (attempt === connectionAttempt.current) {
+        const description = describeConnectionFailure(failure);
+        setError(description.key);
+        setFailureCode(description.code);
+      }
+    } finally {
+      if (attempt === connectionAttempt.current) connectionLock.current = false;
+    }
+  }
+  async function cancelConnection() {
+    ++connectionAttempt.current;
+    connectionLock.current = true;
+    setError(null);
+    setFailureCode(null);
+    try {
+      await disconnectAdapter();
     } catch {
       setError('connectError');
+    } finally {
+      connectionLock.current = false;
     }
   }
   return (
@@ -121,24 +157,52 @@ export function ConnectionPanel() {
             variant={searching ? 'secondary' : 'primary'}
             onPress={() => (searching ? stop.current?.() : void search())}
           />
+          {status === 'connecting' && (
+            <Button
+              label={t('cancelConnection')}
+              variant="ghost"
+              onPress={() => void cancelConnection()}
+            />
+          )}
           {searching && (
             <Text variant="caption" muted accessibilityLiveRegion="polite">
               {t('searching')}
             </Text>
           )}
-          {devices.map((device) => (
+          {devices.length > 0 && (
+            <Text variant="caption" muted>
+              {t(showAll ? 'allBleDevices' : 'likelyObdDevices')}
+            </Text>
+          )}
+          {showAll && <Notice>{t('allBleDevicesHint')}</Notice>}
+          {visibleDevices.map((device) => (
             <Button
               key={device.id}
               variant="secondary"
               disabled={status === 'connecting'}
-              label={`${device.name === 'Unknown' ? t('unknownDevice') : device.name} · ${device.rssi} dBm`}
+              label={`${bleDeviceName(device.name, device.id, t('unknownDevice'))} · ${device.rssi} dBm`}
               onPress={() => void connect(device)}
             />
           ))}
-          {searched && !devices.length && !error && <Notice>{t('noAdapters')}</Notice>}
+          {(hiddenCount > 0 || showAll) && (
+            <Button
+              label={t(showAll ? 'showObdDevices' : 'showAllBleDevices')}
+              variant="ghost"
+              disabled={status === 'connecting'}
+              onPress={() => setShowAll((value) => !value)}
+            />
+          )}
+          {searched && !visibleDevices.length && !error && (
+            <Notice>{t(devices.length ? 'noLikelyObdDevices' : 'noBleDevices')}</Notice>
+          )}
         </>
       )}
       {error && <Notice tone="error">{t(error)}</Notice>}
+      {error && failureCode && (
+        <Text muted variant="caption">
+          {t('connectionFailureCode')}: {failureCode}
+        </Text>
+      )}
     </Card>
   );
 }

@@ -4,8 +4,8 @@ import { useTranslation } from '@/shared/i18n';
 export default function NotFound() {
   const { t } = useTranslation();
   return (
-    <Screen title="404">
-      <Text>{t('noVehicleFound')}</Text>
+    <Screen title={t('pageNotFound')}>
+      <Text>{t('pageNotFoundHint')}</Text>
       <Button label={t('overview')} onPress={() => router.replace('/')} />
     </Screen>
   );

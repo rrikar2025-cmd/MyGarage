@@ -54,13 +54,31 @@ export function DiagnosticsPage() {
                     variant="secondary"
                     onPress={() => router.push(`/scan/${scan.id}`)}
                   />
-                  <Text style={{ fontWeight: '700' }}>{t(scan.context?.mode === 'confirmed' ? 'scanConfirmedMode' : scan.context?.mode === 'all' ? 'scanAllMode' : 'scanLegacyMode')}</Text>
+                  <Text style={{ fontWeight: '700' }}>
+                    {t(
+                      scan.context?.mode === 'confirmed'
+                        ? 'scanConfirmedMode'
+                        : scan.context?.mode === 'all'
+                          ? 'scanAllMode'
+                          : 'scanLegacyMode',
+                    )}
+                  </Text>
                   <Text variant="caption" muted>
                     {formatDate(scan.created_at, locale)}
                   </Text>
                   {(['stored', 'pending', 'permanent'] as const).map((kind) => (
                     <Text key={kind} variant="caption">
-                      {t(kind)}: {scan[kind].join(', ') || t(scan.context?.statuses?.[kind] === 'read' ? 'groupNoCodes' : scan.context?.statuses?.[kind] === 'unavailable' ? 'readUnavailable' : scan.context?.statuses?.[kind] === 'not_requested' ? 'readNotRequested' : 'readUnknown')}
+                      {t(kind)}:{' '}
+                      {scan[kind].join(', ') ||
+                        t(
+                          scan.context?.statuses?.[kind] === 'read'
+                            ? 'groupNoCodes'
+                            : scan.context?.statuses?.[kind] === 'unavailable'
+                              ? 'readUnavailable'
+                              : scan.context?.statuses?.[kind] === 'not_requested'
+                                ? 'readNotRequested'
+                                : 'readUnknown',
+                        )}
                     </Text>
                   ))}
                 </Card>

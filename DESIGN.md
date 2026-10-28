@@ -42,7 +42,7 @@ components:
 
 ## Overview
 
-A personal vehicle logbook for Ukrainian car owners: costs and service history first, real OBD-II diagnosis alongside it. Product register. Visual reference: a well-kept service booklet and the restrained instrument markings of a touring car. Signature: a technical side-profile drawing on the selected vehicle's dark petrol card. No stock car photography, fake gauges, racing graphics or synthetic health score.
+A personal vehicle logbook for Ukrainian car owners: costs and service history first, real OBD-II diagnosis alongside it. Product register. Visual reference: a well-kept service booklet and the restrained instrument markings of a touring car. Signature: the owner's chosen vehicle photo on the dark petrol card, with the technical side-profile drawing as the fallback when no photo is available. No stock car photography, fake gauges, racing graphics or synthetic health score.
 
 ## Colors
 
@@ -85,3 +85,21 @@ Email recovery and callbacks reuse Field, Notice and Button. The callback has on
 The live dashboard is a separate stack route reached from overview or diagnostics. Configuration has its own route so controls do not bury live readings. It reuses canonical Choice, Toggle and Button; selected parameters have accessible up/down alternatives to dragging. MetricGrid owns live and saved-value presentation, including localized unit selection. At <360px values stack in one column. MetricTrend uses real, bounded connection samples; missing values break the path. No decorative/fabricated gauges or test telemetry are shown in product UI.
 
 CodeGroup owns status, empty, unavailable and older-record behavior and expands a small explicit glossary. Scan details use a historical-record notice and distinguish live snapshots from actual ECU freeze frame. VIN mismatch requires an explicit assignment confirmation; it does not silently rewrite vehicle identity. Code clearing uses the canonical danger Confirm with real consequences and engine-off/parked conditions.
+
+## Removed capability
+
+At the user's request on 2026-10-28, vehicle upgrades, installed-part management, build planning and upgrade budgets are removed from the product. No entry points, editors or active routes remain. Garage and Overview keep vehicle photos, fuel, service, costs and diagnostics. Existing legacy data is retained without exposing a dormant feature switch.
+
+## Private photos and reminders 0.6.0
+
+Saved car and receipt entry points use AttachmentButton and a stack route, keeping five tabs. Gallery context names car and saved record/date. AttachmentGallery owns selection/upload/retry/removal, AttachmentTile owns image/caption/loading/error/incomplete states. Inline full-size viewing uses contain, no crop that could hide receipt values. Existing Button/Field/Confirm/Notice and dirty/busy guards stay canonical; no second modal or permission system. Guests get a clear cloud-only explanation. Signed images are temporary view state, not cached public assets.
+
+Push controls live in Settings, with native opt-in and explicit loading/error/retry. Web shows a readable installed-app notice instead of an enabled-looking control. Lock-screen copy is generic and bilingual; opening a reminder goes to service dates. Preserve dark/light contrast and wrapping at 320px. A server acceptance state is never presented as proof of physical delivery.
+
+## Vehicle cover in the editor
+
+VehiclePhotoField reuses the existing camera/library preparation and canonical Button/Notice. Selection is staged with an inline 16:9 preview; only Save vehicle persists it. VehicleCard renders that photo in the same reserved 16:9 frame on Garage and Overview. The technical drawing remains the fallback. Names and mileage stay outside the image for readable contrast. The latest completed cloud vehicle photo is its cover; receipt/part/pending/foreign images never qualify. Guest vehicle covers are stored locally without automatic account upload. Cancel selection affects only the new draft.
+
+## BLE result and failure labels
+
+ConnectionPanel reuses existing Button, Notice and caption text. Separate likely OBD names from the optional full BLE scan; unknown devices are never presented as confirmed adapters. Keep a cancellation action available during connection. Failure copy tells users the failed stage and next action; a short failure code supports device retesting without exposing raw logs. The user requested code-only checks and will verify visuals; no browser QA is required for this change.

@@ -20,3 +20,5 @@ export { describeDtc, normalizeVin, vinMismatch } from './lib/codes';
 export { CodeGroup } from './ui/CodeGroup';
 export { MetricGrid } from './ui/MetricGrid';
 export { MetricTrend } from './ui/MetricTrend';
+export { describeConnectionFailure } from './lib/connection-failure';
+export { isLikelyOBDName, bleDeviceName } from './lib/device-discovery';

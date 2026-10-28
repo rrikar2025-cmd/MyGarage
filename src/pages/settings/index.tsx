@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useSession } from '@/entities/session';
 import { disconnectAdapter } from '@/entities/obd';
+import { ServiceReminderSetting, disablePushDevice } from '@/features/push-notifications';
 import { supabase } from '@/shared/api';
 import { isCloudConfigured } from '@/shared/config';
 import { usePreferences } from '@/shared/model';
@@ -19,6 +21,7 @@ export function SettingsPage() {
     setBusy(true);
     setError(false);
     try {
+      if (session?.user.id) await disablePushDevice(session.user.id).catch(() => {});
       const result = await supabase?.auth.signOut({ scope: 'local' });
       if (result?.error) throw result.error;
       await disconnectAdapter();
@@ -58,6 +61,13 @@ export function SettingsPage() {
           />
         </Card>
       </Section>
+      {
+        <Section title={t('servicePushTitle')}>
+          <Card>
+            <ServiceReminderSetting ownerId={session?.user.id ?? null} />
+          </Card>
+        </Section>
+      }
       <Card>
         <Text variant="heading">{t('telemetryDashboard')}</Text>
         <Button

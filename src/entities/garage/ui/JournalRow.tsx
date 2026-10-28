@@ -7,14 +7,17 @@ export function JournalRow({
   entry,
   onEdit,
   onDelete,
+  onPhotos,
 }: {
   entry: JournalEntry;
   onEdit: () => void;
   onDelete: () => void;
+  onPhotos: () => void;
 }) {
   const { t, locale } = useTranslation();
   return (
     <Card>
+      <Button label={t('receiptPhotos')} icon="image" variant="secondary" onPress={onPhotos} />
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
         <Icon name={entry.kind === 'fuel' ? 'droplet' : 'tool'} />
         <View style={{ flex: 1, gap: 4 }}>

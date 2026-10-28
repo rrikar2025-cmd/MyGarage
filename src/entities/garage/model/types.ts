@@ -1,5 +1,7 @@
 import type { ScanContext } from '@/shared/types';
 export type Vehicle = {
+  /** Retained for lossless round-tripping of pre-removal vehicle records. */
+  build_budget?: number | null;
   id: string;
   make: string;
   model: string;
@@ -51,7 +53,11 @@ export type ServiceEntry = {
 };
 export type JournalEntry =
   { kind: 'fuel'; data: FuelEntry } | { kind: 'service'; data: ServiceEntry };
+/** Opaque retired rows stay in guest snapshots so ordinary saves never discard prior data. */
+type LegacyVehicleRecord = { id: string; vehicle_id: string; [field: string]: unknown };
 export type GarageData = {
+  mods: LegacyVehicleRecord[];
+  builds: LegacyVehicleRecord[];
   vehicles: Vehicle[];
   scans: DiagnosticScan[];
   fuel: FuelEntry[];
@@ -60,6 +66,8 @@ export type GarageData = {
 };
 export const emptyGarage = (): GarageData => ({
   vehicles: [],
+  mods: [],
+  builds: [],
   scans: [],
   fuel: [],
   service: [],

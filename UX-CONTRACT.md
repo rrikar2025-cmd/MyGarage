@@ -2,7 +2,7 @@
 
 ## Sources
 
-Current user brief (2026-10-28): separate Expo project, FSD, Ukrainian/English, light/dark, Supabase, all DriveSpecX capabilities over successive migration stages, vehicle details, service log, refuelling and expense totals.
+Current user brief (2026-10-28): separate Expo project, FSD, Ukrainian/English, light/dark, Supabase, DriveSpecX capabilities over successive migration stages, with upgrades/build planning explicitly removed by the latest user decision, vehicle details, service log, refuelling and expense totals.
 Domain source: src/entities/garage/model/types.ts and supabase/migrations/202610280001_garage.sql. Original native contracts: modules/obd, copied from DriveSpecX-RN with parser fix preserved.
 Permission model: authenticated owner only; RLS on every table and composite parent-owner foreign keys. No billing. No production legal copy is invented in this stage.
 
@@ -20,9 +20,10 @@ Permission model: authenticated owner only; RLS on every table and composite par
 ## Flows
 
 - Add/edit vehicle → save validated record → garage list. Save fuel/service → journal. Cancel/back from dirty forms asks about discarding. Save failure retains all inputs. Duplicate submit disabled. All new record IDs are stable across retries.
-- Vehicle deletion explicitly names car and permanently cascades scans, fuel and service. Single journal deletion names date and cost and recalculates totals. No bulk financial-history deletion exists.
+- Vehicle deletion explicitly names car and permanently cascades scans, fuel, service, modifications and build items. Single journal deletion names date and cost and recalculates totals. No bulk financial-history deletion exists.
 - A journal odometer greater than the current reading advances current mileage, atomically in cloud. Historical entries may use lower mileage. Deleting or correcting an entry does not automatically reduce current vehicle mileage; correct it via vehicle edit.
-- Service reminders use the latest entry per category; other-category tasks are keyed by normalized title. Date or odometer can trigger due status independently. Due soon means <=30 days or <=500km. Overdue sorts first. Reminders are in-app; push scheduling is not implemented yet.
+- Service reminders use the latest entry per category; other-category tasks are keyed by normalized title. Date or odometer can trigger due status independently. Due soon means <=30 days or <=500km. Overdue sorts first. The in-app schedule remains available to guests and signed-in users.
+- Service reminder push is an explicit iOS/Android opt-in for signed-in cloud accounts. The device registers one Expo push token, locale, and IANA timezone; users can disable this device without affecting other devices. A server job sends a generic reminder once at the soon stage and once again if it becomes overdue, at 09:00 local device time. Pushes link to the service schedule and do not expose vehicle or service details on the lock screen. Guest accounts continue to use in-app reminders only.
 - Overview totals use the current calendar month/year. Detailed reports allow past months/years, the last 30 inclusive calendar days, or the last 12 months through today. UAH only. Historical dates use ISO date-only and do not shift timezones. Amounts sum as integer kopecks. Future dates and invalid dates rejected.
 - Guest data remains local and separate from signed-in cloud data. No silent migration, upload or account mixing. Cloud load failure never switches to guest storage. Failed writes remain pending on screen. Sign-out is device-local, and disconnects the adapter.
 - Real adapter scanning requires a native development build. BLE ELM327 is supported; no Bluetooth Classic or Wi-Fi claim. Search is bounded, can stop, and stops on background/unmount. One serialized native queue handles connect, reads and telemetry; polling pauses in background. Permission denial and connection failure get explicit recovery copy.
@@ -33,7 +34,7 @@ Permission model: authenticated owner only; RLS on every table and composite par
 
 ## Known stage limits
 
-The selected Supabase project is configured and all four migrations were applied; live transactional RLS checks passed. Full in-app Auth/email and two real signed-in sessions remain unverified. Apple/Google sign-in, photos, AI proxy, modifications, builds and performance migrate in following stages listed in ROADMAP.md. Concurrent cloud edits currently use last successful write; conflict handling is a release gate. Vehicle list fetch is bounded at 100, cloud scan history fetch at 100 (older rows remain in the database; guest history is retained in full), visible per-car scan history at 20. Financial history fetches every page for complete totals; UI renders 20 records per batch.
+The selected Supabase project is configured and migrations 001–010 were applied; live transactional RLS checks passed. Full in-app Auth/email and two real signed-in sessions remain unverified. Apple/Google sign-in, AI proxy and performance migrate in following stages listed in ROADMAP.md. Concurrent cloud edits currently use last successful write; conflict handling is a release gate. Vehicle list fetch is bounded at 100, cloud scan history fetch at 100 (older rows remain in the database; guest history is retained in full), visible per-car scan history at 20. Financial history fetches every page for complete totals; UI renders 20 records per batch.
 
 ## Logbook 0.2.0 additions
 
@@ -63,3 +64,39 @@ The selected Supabase project is configured and all four migrations were applied
 - Live native caches reset per polling cycle; missing PIDs do not inherit an older cycle's reading. Samples are bounded to 30 and reset for a new connection. Charts are ordinal polling cycles, not uniform-time samples. No server persistence of continuous telemetry was added.
 - Preferences select 1–8 of 20 mapped readings and their order. Metric/imperial conversion applies to speed, temperature and pressure in live/snapshot views. Logbook distance/fuel/currency stays km/litres/UAH. MAP remains absolute, oil temperature is not oil pressure. AFR estimates that assume a fixed gasoline ratio are not surfaced as universal measurements.
 - Actual ECU freeze frame, readiness completeness, PID-support discovery, all-module scans and severity scoring are not implemented. Physical validation is deferred until the user's chosen final testing stage; parser/SDK/SQL/browser checks continue during development.
+
+## Removed upgrades / build planning
+
+Source: explicit user request on 2026-10-28. Remove entry points, routes, parts/build editors, upgrade budgets, installation actions, feature translations and cloud collection queries. Old direct routes use the canonical not-found page; retired mod/build attachment targets cannot open a gallery or trigger upload in the current app. Vehicle/fuel/service photos remain available.
+
+No database purge or destructive migration is part of removal. Existing server tables, RLS, private objects and migration history remain intact. Guest snapshots round-trip opaque legacy mods/builds and vehicle budget fields so ordinary saves do not erase historical financial records. Explicit vehicle/account deletion retains the established all-linked-data lifecycle. Retired sources are archived under work/retired-upgrades, excluded from active routes/build/typecheck/tests; no runtime enable flag exists.
+
+## Private attachments and push 0.6.0
+
+- Photo target is a saved owner-bound vehicle, fuel or service entry. Caption and target context identify the record. Guests see cloud-only copy and sign-in; no silent guest upload. Camera is native only. Selecting a photo immediately uploads the prepared copy, with a stable id for retry; pending upload and caption drafts guard navigation. Failed prepared copies remain available for retry/discard; removal names the caption and requires Confirm.
+- AttachmentGallery/AttachmentTile are canonical photo owners; AttachmentButton is shared by entry points. Never persist public links or signed URLs in data/preferences. View links expire in 60 seconds, refresh while focused, and clear on blur/session change. Mobile temporary prepared files are removed when finished/discarded/unmounted. System-selected originals are retained.
+- Private Storage uses own metadata and typed parent FKs. JPEG only, 5 MiB output, 10 per target, 200 per owner. Original input <=20 MiB and <=12000 px per side; output longest side 1600 px, receipts 2400 px. Re-encoding excludes original EXIF. Client preparation is not a malware/content inspection service.
+- Parent deletion queues physical files for Storage API removal. Queue worker runs every 15 minutes, expires incomplete reservations after an hour and retains deletion tombstones 7 days for late uploads. Deleted metadata immediately stops issuing new links; previously issued links can survive until expiry/removal. Account deletion fences uploads, removes own files through Storage API then removes account. Failure can leave photos partly removed and upload blocked; copy tells users to retry completion. Never promise atomic rollback of Storage plus Auth.
+- Push toggle is native and opt-in only for signed-in users. Web explains installed-device requirement. Refresh of existing opt-in updates token/session/locale/timezone without prompting. Disabling affects this token; session deletion cascades registered devices. Lock-screen text excludes car, service and financial detail.
+- Server claims once per entry/device/stage/deadline revision at 09:00 device-local time. Cron runs every 15 minutes. New deadline can notify again; date or mileage may trigger status. A claim precedes sending; an unknown send result is not retried automatically, so delivery can be missed. Expo ticket/receipt acceptance does not establish visible phone delivery; transport delivery guarantees are not claimed.
+- Live private-bucket/config/auth/fixture checks passed. Actual photo upload, native permission dialogs and physical push delivery remain unverified. Android requires its own FCM setup before build. New development binary is required; browser UI is not evidence of device delivery. Keep email link confirmation; deferred OTP is inactive.
+
+## Vehicle photo while adding or editing
+
+Source: user request 2026-10-28 to select a vehicle photo during creation and replace the default card illustration. VehiclePhotoField/useVehiclePhotoDraft own staged camera/library selection and preparation; existing fields and navigation guard remain canonical. Save first persists the stable-UUID vehicle, then its selected photo. A failed photo write keeps the selection and explains that the car already exists; retry upserts the same vehicle instead of duplicating it. Until Save, cancel/back never persists a selected image. Cancel selection restores the previously saved cover.
+
+Guest covers are a specific exception to cloud-only galleries: one main image per vehicle is stored in the app's document directory on native, or as an IndexedDB Blob on web. Shared/media owns this storage; photo bytes and temporary object URLs are never added to guest JSON. Replacing commits a new file pointer before deleting the prior native copy; IndexedDB replacement is transactional. Vehicle deletion/guest-load pruning cleans detached local covers. Signing in never uploads guest photos. A guest vehicle photo page can preview its saved cover and link to edit; additional photos/receipts still require the cloud account.
+
+Cloud covers reuse owner-protected vehicle attachments and 60-second signed links, without a new public URL column or database migration. The latest ready vehicle attachment (created_at, then id) supplies the card cover; pending/other-kind/foreign photos do not. Garage loads covers in a bounded batch; focus/app-active refresh and cleanup prevent stale account links and leaked browser object URLs. Gallery additions/removals are reflected when returning to the cards. No photo/network error removes the car; the drawing is a safe fallback.
+
+Manual phone camera, native file lifecycle and authenticated cloud integration remain part of the deferred device QA. Local browser create/photo/validation/navigation/reload coverage is recorded in tests/browser-report.md.
+
+## BLE troubleshooting and discovery — 2026-10-28
+
+The user now owns visual/device UI checks; agents run code and targeted tests without browser verification unless explicitly requested. Report the short manual retest steps.
+
+Discovery is an unfiltered native BLE scan, not proof of an ELM327 device. ConnectionPanel initially lists only name-based likely OBD candidates. Other/unnamed devices remain available behind Show all BLE devices with an explicit explanation. Unnamed devices are labelled Unnamed device with a short distinguishing suffix; never call every scan result an adapter. Advertising names only guide discovery; the ELM/ECU handshake still determines readiness. Unknown adapter names must retain this explicit full-list fallback.
+
+Connection failures distinguish transport, UART selection, notifications, AT/reset response and ECU negotiation, with a bounded technical code that excludes raw peripheral identifiers or vehicle data. An older binary's single connection timeout cannot identify the failing phase and is not labelled as a proven BLE timeout. Connection cancellation settles the active promise; stale callbacks and timeouts cannot complete a new iOS attempt. Each command keeps a unique timeout token; an extra reset prompt cannot complete the next unsent command.
+
+Known UART profiles select explicit data characteristics before a generic fallback; FFF0 writes use FFF2 and notifications FFF1, not an arbitrary writable configuration channel. Ambiguous iOS fallback services are rejected. Transport and initialization have separate bounded time budgets; Connected still requires a positive PID 0100 response. Native changes require a rebuilt iOS development app; reloading JS alone updates the discovery list/error copy, not native connection behavior. No Mode 04 or ECU write tests are performed for this fix.

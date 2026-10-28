@@ -8,8 +8,10 @@ export function Choice<T extends string>({
   options,
   onChange,
   disabled,
+  layout = 'list',
 }: {
   disabled?: boolean;
+  layout?: 'list' | 'grid';
   label: string;
   value: T;
   options: { value: T; label: string }[];
@@ -17,7 +19,15 @@ export function Choice<T extends string>({
 }) {
   const { colors } = useTheme();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: 4 }}>
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      style={{
+        gap: 4,
+        flexDirection: layout === 'grid' ? 'row' : 'column',
+        flexWrap: layout === 'grid' ? 'wrap' : 'nowrap',
+      }}
+    >
       {options.map((option) => (
         <Pressable
           key={option.value}
@@ -30,6 +40,7 @@ export function Choice<T extends string>({
             paddingHorizontal: 14,
             paddingVertical: 14,
             minHeight: 50,
+            ...(layout === 'grid' ? { flexGrow: 1, flexBasis: 130 } : {}),
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,

@@ -1,4 +1,78 @@
 export const en = {
+  allBleDevices: 'All discovered BLE devices',
+  likelyObdDevices: 'Possible OBD adapters',
+  allBleDevicesHint:
+    'This is the full Bluetooth LE scan list. It may include computers, sensors and other devices. ELM327 compatibility is checked when connecting.',
+  showObdDevices: 'Show possible OBD devices only',
+  showAllBleDevices: 'Show all BLE devices',
+  noLikelyObdDevices:
+    'No likely OBD adapters found. If your adapter has no name or a different name, open the full BLE device list.',
+  noBleDevices: 'No BLE devices found. Check Bluetooth and adapter power, then search again.',
+  connectBluetoothTimeout:
+    'Bluetooth did not connect in time. Close other diagnostic apps, check adapter power, and retry.',
+  connectUartError:
+    'No compatible ELM327 data channel was found. Select the vehicle OBDII adapter.',
+  connectNotifyError:
+    'Bluetooth data notifications could not be enabled. Close other diagnostic apps and reconnect.',
+  connectAdapterTimeout:
+    'ELM327 initialization did not finish in time. Check adapter power and reconnect.',
+  connectVehicleError:
+    'Communication with the vehicle was not confirmed. Check that the adapter is in the OBD port and the ignition is on.',
+  connectDisconnected:
+    'The adapter disconnected from Bluetooth. Check power, close other diagnostic apps, and reconnect.',
+  connectBusy:
+    'Another connection or read is already running. Wait for it to finish or cancel the connection.',
+  cancelConnection: 'Cancel connection',
+  connectionFailureCode: 'Failure code',
+  pageNotFound: 'Page not found',
+  pageNotFoundHint: 'Return to the overview or open a section from the app navigation.',
+  attachmentNotFound: 'Record not found',
+  attachmentNotFoundHint: 'Open a vehicle or expense record from your garage or journal.',
+  photosLocalCoverHint:
+    'You can keep a main vehicle photo on this device. Choose or change it when editing the vehicle. Additional photos and receipts are available in the cloud garage.',
+  vehiclePhoto: 'Vehicle photo',
+  vehiclePhotoReplace: 'Change photo',
+  vehiclePhotoCancelSelection: 'Cancel photo selection',
+  vehiclePhotoCloudHint:
+    'Optional. The photo is saved privately when you choose Save vehicle. The latest added vehicle photo appears on its card.',
+  vehiclePhotoLocalHint:
+    'Optional. The photo is saved only on this device when you choose Save vehicle.',
+  vehiclePhotoSaveFailed:
+    'The vehicle was saved, but its photo could not be saved. Your selected photo is kept in this form. Choose Save vehicle again; this will not create a duplicate vehicle.',
+
+  photos: 'Photos',
+  receiptPhotos: 'Receipt photos',
+  photosCloudOnly:
+    'Photos are stored privately in your cloud account. Sign in and add the vehicle to your cloud garage to attach photos. Guest records stay on this device.',
+  photosPrivacyHint:
+    'Only your account can access these photos. Viewing links expire quickly. Removing a record also removes its attached photos.',
+  photoCaption: 'Caption (optional)',
+  photoRefresh: 'Refresh photos',
+  photoChoose: 'Choose a photo',
+  photoCamera: 'Take a photo',
+  photosLimitHint:
+    'Up to 10 photos per record and 200 per account. Photos are resized before uploading; maximum 5 MB per photo.',
+  photosEmpty: 'No photos yet',
+  photosEmptyHint: 'Add a photo of your vehicle or receipt.',
+  photoPreview: 'Photo',
+  photoPickFailed:
+    'The photo could not be prepared. Choose another image or check photo access in your device settings.',
+  photoOpen: 'View photo',
+  photosLoadFailed: 'Photos could not be loaded. Check your connection and try again.',
+  photoUploadFailed: 'The photo could not be saved. Your selected photo is kept here for retry.',
+  photoRemoveFailed: 'Photo removal could not be confirmed. Check your connection and try again.',
+  photoPermissionDenied:
+    'Camera access is unavailable. Allow it in device settings or choose a photo from your library.',
+  photoTooLarge:
+    'Choose a smaller image. The original must be under 20 MB and no side longer than 12,000 pixels.',
+  photoPendingHint:
+    'This photo has not been confirmed as saved. Retry or remove this upload before leaving.',
+  photoIncomplete: 'This upload was not completed. Remove it and add the photo again.',
+  photoPreviewFailed: 'Preview unavailable. Refresh the photos to request a new viewing link.',
+  photoRemove: 'Delete photo',
+  photoDiscard: 'Discard upload',
+  photoRemoveBody:
+    'Permanently delete this photo and its upload? The vehicle, part or expense record will stay. This cannot be undone.',
   appName: 'My Garage',
   overview: 'Overview',
   diagnostics: 'Diagnostics',
@@ -34,7 +108,7 @@ export const en = {
   retry: 'Try again',
   deleteVehicle: 'Delete vehicle?',
   deleteVehicleBody:
-    'This will permanently delete this vehicle and its saved diagnostics. This cannot be undone.',
+    'The vehicle and all its records, including financial history and photos, will be permanently deleted. This cannot be undone.',
   deleteVehicleAction: 'Delete vehicle',
   validationRequired: 'Enter the make and model (up to 60 characters each).',
   validationYear: 'Enter a valid four-digit year.',
@@ -66,8 +140,7 @@ export const en = {
     'No adapters found. Check Bluetooth, permissions and adapter power, then search again.',
   bluetoothError:
     'Could not use Bluetooth. Enable it, allow Bluetooth access in system settings, and check your adapter.',
-  connectError:
-    'Could not connect. Check that this is a supported BLE ELM327 adapter and try again.',
+  connectError: 'Could not connect. Close other diagnostic apps, check adapter power, and retry.',
   scanCar: 'Read fault codes',
   scanning: 'Reading fault codes…',
   scanHint:
@@ -101,6 +174,16 @@ export const en = {
   cloudModeHint:
     'Your signed-in garage is stored in your Supabase account. An internet connection is needed to load and save it.',
   cloudUnavailable: 'Cloud sign-in is not configured yet. Your local garage is ready to use.',
+  servicePushNativeOnly: 'Push reminders are available in the installed iOS and Android app.',
+  servicePushTitle: 'Service reminder notifications',
+  servicePushHint:
+    'Reminders arrive around 09:00 in your device timezone: once before the deadline and once if service is overdue. Vehicle and expense details are hidden on the lock screen.',
+  servicePushOn: 'Service reminders are enabled on this device.',
+  servicePushOff: 'Enable notifications to get service reminders on this device.',
+  servicePushSignIn: 'Sign in to your cloud garage to enable service reminders.',
+  servicePushPermissionDenied:
+    'Notifications are blocked. Allow them for My Garage in device settings, then try again.',
+  servicePushFailed: 'Could not update notifications. Check your connection and try again.',
   loadFailed: 'Could not load your garage. Check the internet connection and try again.',
   saveFailed: 'Could not save. Your changes are still here. Check the connection and try again.',
   language: 'Language',
@@ -114,7 +197,7 @@ export const en = {
   signOutBody:
     'Your cloud garage stays in your account. This device will return to its separate guest garage.',
   authIntro: 'Keep your garage with you.',
-  authBody: 'Sign in to save your vehicles and diagnostics to your account.',
+  authBody: 'Sign in to keep your vehicles and diagnostics in your account.',
   email: 'Email',
   password: 'Password',
   showPassword: 'Show password',
@@ -122,12 +205,12 @@ export const en = {
   authInvalid: 'Enter a valid email and a password of at least 8 characters.',
   authFailed: 'Could not complete sign-in. Check your details and connection, then try again.',
   confirmEmail:
-    'Check your inbox. Open the confirmation link in the same app or browser where you signed up. If the account already exists, sign in or reset your password.',
+    'Check your email. Open the link in the same app or browser where you signed up. If the account already exists, sign in or reset your password.',
   forgotPassword: 'Reset password',
   resetSent: 'If this email is registered, a password reset message will arrive shortly.',
   resetInfo:
     'Open the email link on this device and in the same app or browser where you requested it. You will be able to choose a new password.',
-  version: 'Version 0.4.0 · In development',
+  version: 'Version 0.6.0 · In development',
   about: 'Built for your everyday drive',
   aboutBody: 'Vehicle details, real OBD-II readings and a history you can return to.',
   privacyNote:
@@ -143,7 +226,7 @@ export const en = {
   discard: 'Discard changes',
   connectionLost: 'The adapter disconnected. Reconnect to get fresh readings.',
   staleReadings: 'Last readings · reconnect to refresh',
-  unknownDevice: 'BLE adapter',
+  unknownDevice: 'Unnamed device',
   code: 'Code',
   start: 'Get started',
   localSaved: 'Saved on this device',
@@ -190,7 +273,8 @@ export const en = {
   moneyHint: 'Costs use UAH for the selected car and the current calendar month or year.',
   noVehicleFound: 'Vehicle not found',
   scanVehicleHint: 'Before scanning, check that the selected car is the one connected.',
-  deleteScanScope: 'Including scans, fill-ups and service history.',
+  deleteScanScope:
+    'Including scans, fill-ups, service history and all other linked records and photos.',
   more: 'Show more',
   navJournal: 'Journal',
   navDiagnostics: 'Scan',
@@ -252,7 +336,7 @@ export const en = {
   serviceAtDate: 'By date',
   serviceLastDone: 'Last completed',
   serviceScheduleHint:
-    'Dates come from the most recent service in each category. “Due soon” means within 500 km or 30 days. Background notifications are not sent yet.',
+    'Dates come from the most recent service in each category. “Due soon” means within 500 km or 30 days. Sign in and enable service reminders in Settings for background notifications.',
   nextMileageColumn: 'Next service odometer',
   remainingKm: 'Distance until service, km',
   daysRemaining: 'Days until service',
@@ -286,16 +370,16 @@ export const en = {
   accountSecurity: 'Account security',
   deleteAccount: 'Delete account',
   deleteAccountScope:
-    'Permanently removes this account and all its cloud vehicles, scans, fuel and service records. This includes financial history. Guest records stored on this device are kept. Export any records you need before continuing.',
+    'Permanently removes this account and all its cloud vehicles, scans, fuel and service records and all other linked data. This includes financial history and all attached photos. Guest records stored on this device are kept. Export any records you need before continuing.',
   currentPassword: 'Current password',
   deleteWord: 'DELETE',
   deleteWordLabel: 'Deletion confirmation',
   deleteWordHint: 'Type DELETE to continue.',
   deleteAccountBody:
-    'Permanently delete the account shown on this page and all its cloud garage data, including financial history? This cannot be undone.',
+    'Permanently delete the account shown on this page and all its cloud garage data, including financial history and photos? Photos may start being removed before account deletion finishes. This cannot be undone.',
   deletePermanently: 'Delete permanently',
   deleteAccountFailed:
-    'Account deletion could not be confirmed. Check your password and connection. If the connection was lost after confirmation, sign in again to check the account before retrying.',
+    'Account deletion could not be confirmed. Check your password and connection. If removal already started, some photos may have been removed and new uploads blocked. Sign in again, check the account, and retry deletion if it still exists.',
   accountDeleted: 'Account and cloud garage data deleted. You can continue with a local garage.',
   deleteRequiresAccount: 'Sign in to manage your account.',
   secureConnectionRequired:

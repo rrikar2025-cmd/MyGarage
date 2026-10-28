@@ -6,11 +6,18 @@ import { useGarage, validateVehicle, type VehicleInput, type Vehicle } from '@/e
 import { useTranslation, type MessageKey } from '@/shared/i18n';
 import { useUnsavedChanges } from '@/shared/navigation';
 import { ReadVin } from '@/features/read-vin';
+import {
+  VehiclePhotoField,
+  useVehiclePhotoDraft,
+  useVehicleCovers,
+  saveVehiclePhoto,
+} from '@/features/manage-attachments';
 import { Button, Card, Field, Notice, Screen, Loading, Text } from '@/shared/ui';
 export function VehicleEditorPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useGarage((s) => s.vehicles.find((v) => v.id === id));
   const loading = useGarage((s) => s.loading);
+  const owner = useGarage((s) => s.owner);
   const { t } = useTranslation();
   if (loading)
     return (
@@ -25,10 +32,14 @@ export function VehicleEditorPage() {
         <Button label={t('garage')} onPress={() => router.replace('/garage')} />
       </Screen>
     );
-  return <VehicleForm key={id} existing={existing} />;
+  return <VehicleForm key={`${owner ?? 'guest'}:${id}`} existing={existing} />;
 }
 function VehicleForm({ existing }: { existing?: Vehicle }) {
   const { t } = useTranslation();
+  const owner = useGarage((s) => s.owner);
+  const photo = useVehiclePhotoDraft();
+  const covers = useVehicleCovers(owner, existing ? [existing.id] : []);
+  const saveLock = useRef(false);
   const first = useRef<TextInput>(null);
   const modelRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
@@ -49,16 +60,20 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<MessageKey | null>(null);
-  const guard = useUnsavedChanges(!saved && JSON.stringify(form) !== baseline, busy);
+  const guard = useUnsavedChanges(
+    !saved && (JSON.stringify(form) !== baseline || Boolean(photo.photo)),
+    busy || photo.busy,
+  );
   useEffect(() => {
     if (saved) router.replace('/garage');
   }, [saved]);
   const field = (name: keyof typeof form) => ({
     value: form[name],
     onChangeText: (value: string) => setForm((s) => ({ ...s, [name]: value })),
-    editable: !busy,
+    editable: !busy && !photo.busy,
   });
   async function save() {
+    if (saveLock.current || photo.busy) return;
     const input: VehicleInput = {
       make: form.make.trim(),
       model: form.model.trim(),
@@ -86,14 +101,19 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
       target.current?.focus();
       return;
     }
+    saveLock.current = true;
     setBusy(true);
     setError(null);
+    let vehicleSaved = false;
     try {
       await useGarage.getState().saveVehicle(input, existing?.id, draftId);
+      vehicleSaved = true;
+      if (photo.photo) await saveVehiclePhoto(owner, existing?.id ?? draftId, photo.photo);
       setSaved(true);
     } catch {
-      setError('saveFailed');
+      setError(vehicleSaved && photo.photo ? 'vehiclePhotoSaveFailed' : 'saveFailed');
     } finally {
+      saveLock.current = false;
       setBusy(false);
     }
   }
@@ -101,9 +121,20 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
     <Screen
       title={t(existing ? 'editVehicle' : 'addVehicle')}
       action={
-        <Button label={t('back')} variant="ghost" onPress={() => router.back()} disabled={busy} />
+        <Button
+          label={t('back')}
+          variant="ghost"
+          onPress={() => router.back()}
+          disabled={busy || photo.busy}
+        />
       }
     >
+      <VehiclePhotoField
+        draft={photo}
+        currentURI={existing ? covers[existing.id] : undefined}
+        disabled={busy}
+        cloud={Boolean(owner)}
+      />
       {
         <Card>
           <Field
@@ -151,9 +182,17 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
             maxLength={17}
             {...field('vin')}
           />
-          <ReadVin disabled={busy} onApply={(vin) => setForm((current) => ({ ...current, vin }))} />
+          <ReadVin
+            disabled={busy || photo.busy}
+            onApply={(vin) => setForm((current) => ({ ...current, vin }))}
+          />
           {error && <Notice tone="error">{t(error)}</Notice>}
-          <Button label={t('saveVehicle')} busy={busy} onPress={() => void save()} />
+          <Button
+            label={t('saveVehicle')}
+            busy={busy}
+            disabled={photo.busy}
+            onPress={() => void save()}
+          />
         </Card>
       }
       {guard}

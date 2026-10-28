@@ -9,6 +9,12 @@ port = 54322
 major_version = 15
 [auth]
 enabled = true
-site_url = "http://localhost:8082"
-additional_redirect_urls = ["mygarage://auth/callback", "mygarage://auth/callback?sb_flow_id=*", "http://localhost:8081/auth/callback", "http://localhost:8081/auth/callback?sb_flow_id=*", "http://localhost:8082/auth/callback", "http://localhost:8082/auth/callback?sb_flow_id=*"]
+site_url = "http://localhost:8081"
+additional_redirect_urls = ["mygarage://auth/callback"]
 minimum_password_length = 8
+
+[functions.delete-account]
+verify_jwt = false
+
+[functions.garage-jobs]
+verify_jwt = false

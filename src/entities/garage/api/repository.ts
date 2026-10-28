@@ -1,20 +1,13 @@
+import { pruneLocalVehicleCovers } from '@/shared/media';
 import { requireCloud } from '@/shared/api';
 import { storage } from '@/shared/lib';
 import type { GarageData, Vehicle, DiagnosticScan, FuelEntry, ServiceEntry } from '../model/types';
-import { emptyGarage } from '../model/types';
+import { parseGuestGarage } from '../lib/guest-data';
 const KEY = 'mygarage.guest.v1';
 export async function readGarage(owner: string | null): Promise<GarageData> {
   if (!owner) {
-    const raw = await storage.getItem(KEY);
-    if (!raw) return emptyGarage();
-    const data = JSON.parse(raw) as GarageData;
-    if (
-      !Array.isArray(data.vehicles) ||
-      !Array.isArray(data.scans) ||
-      !Array.isArray(data.fuel) ||
-      !Array.isArray(data.service)
-    )
-      throw new Error('Invalid local garage');
+    const data = parseGuestGarage(await storage.getItem(KEY));
+    await pruneLocalVehicleCovers(data.vehicles.map((v) => v.id)).catch(() => {});
     return data;
   }
   const db = requireCloud();
@@ -45,6 +38,9 @@ export async function readGarage(owner: string | null): Promise<GarageData> {
     fuel,
     service,
     selectedId: vehicles.data[0]?.id ?? null,
+    // Retired cloud collections are preserved on the server, not fetched into the app.
+    mods: [],
+    builds: [],
   };
 }
 async function readAll<T extends { id: string }>(
@@ -73,10 +69,13 @@ export async function writeCloud<T extends { id: string }>(
   record: T,
 ) {
   // Upsert by client UUID makes a retry after an uncertain network response idempotent.
-  const { error } = await requireCloud()
+  const { data, error } = await requireCloud()
     .from(table)
-    .upsert({ ...record, owner_id: owner }, { onConflict: 'id' });
+    .upsert({ ...record, owner_id: owner }, { onConflict: 'id' })
+    .select('*')
+    .single<T>();
   if (error) throw error;
+  return data;
 }
 export async function removeCloud(table: RecordTable, owner: string, id: string) {
   const { error } = await requireCloud().from(table).delete().eq('owner_id', owner).eq('id', id);

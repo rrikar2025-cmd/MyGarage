@@ -51,6 +51,7 @@ function clientWith(
   } = {},
 ) {
   const calls: string[] = [];
+  const deletionFails = options.rpcError;
   const client: DeletionClient = {
     auth: {
       getUser: async () => {
@@ -68,11 +69,16 @@ function clientWith(
         };
       },
     },
-    rpc: async (name, args) => {
-      calls.push('delete');
-      assert.equal(name, 'delete_own_account');
-      assert.deepEqual(args, { p_confirmation: 'DELETE_MY_ACCOUNT', p_expected_user: 'owner' });
-      return { error: options.rpcError ? {} : null };
+    functions: {
+      invoke: async (name, options) => {
+        calls.push('delete');
+        assert.equal(name, 'delete-account');
+        assert.deepEqual(options.body, {
+          confirmation: 'DELETE_MY_ACCOUNT',
+          expectedUserId: 'owner',
+        });
+        return { data: deletionFails ? null : { deleted: true }, error: deletionFails ? {} : null };
+      },
     },
   };
   return { client, calls };

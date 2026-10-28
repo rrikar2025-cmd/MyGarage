@@ -1,3 +1,4 @@
+import { AttachmentButton, useVehicleCovers } from '@/features/manage-attachments';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useGarage, useSelectedVehicle, VehicleCard } from '@/entities/garage';
@@ -12,6 +13,7 @@ export function OverviewPage() {
   const loading = useGarage((s) => s.loading);
   const error = useGarage((s) => s.error);
   const owner = useGarage((s) => s.owner);
+  const covers = useVehicleCovers(owner, vehicle ? [vehicle.id] : []);
   return (
     <Screen title={t('appName')} subtitle={t('greetingSub')}>
       {loading ? (
@@ -35,7 +37,8 @@ export function OverviewPage() {
         </>
       ) : (
         <>
-          <VehicleCard vehicle={vehicle} selected />
+          <VehicleCard vehicle={vehicle} selected photoURI={covers[vehicle.id]} />
+          <AttachmentButton kind="vehicle" id={vehicle.id} />
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
             <View style={{ flex: 1, minWidth: 150 }}>
               <Button
@@ -55,6 +58,7 @@ export function OverviewPage() {
             </View>
           </View>
           <ExpenseSummary vehicleId={vehicle.id} />
+
           <ServiceReminders vehicleId={vehicle.id} mileage={vehicle.mileage} />
           <LiveTelemetry />
         </>

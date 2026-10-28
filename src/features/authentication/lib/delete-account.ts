@@ -7,10 +7,12 @@ export type DeletionClient = {
       password: string;
     }) => PromiseLike<{ data: { user: User | null }; error: unknown }>;
   };
-  rpc: (
-    name: string,
-    args: { p_confirmation: string; p_expected_user: string },
-  ) => PromiseLike<{ error: unknown }>;
+  functions: {
+    invoke: (
+      name: string,
+      options: { body: { confirmation: string; expectedUserId: string } },
+    ) => PromiseLike<{ data: { deleted?: boolean } | null; error: unknown }>;
+  };
 };
 // The server also checks the signed JWT's recent password AMR and live session id.
 export async function deleteAccountWithPassword(
@@ -24,9 +26,8 @@ export async function deleteAccountWithPassword(
   const signed = await client.auth.signInWithPassword({ email: current.data.user.email, password });
   if (signed.error || signed.data.user?.id !== expectedUserId)
     throw new Error('Reauthentication failed');
-  const result = await client.rpc('delete_own_account', {
-    p_confirmation: 'DELETE_MY_ACCOUNT',
-    p_expected_user: expectedUserId,
+  const result = await client.functions.invoke('delete-account', {
+    body: { confirmation: 'DELETE_MY_ACCOUNT', expectedUserId },
   });
-  if (result.error) throw new Error('Account deletion failed');
+  if (result.error || !result.data?.deleted) throw new Error('Account deletion failed');
 }

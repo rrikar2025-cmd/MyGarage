@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useState } from 'react';
+import { View, Image } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { Text } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
@@ -27,11 +28,14 @@ export function CarDrawing({ color }: { color: string }) {
 export function VehicleCard({
   vehicle,
   selected = false,
+  photoURI,
 }: {
   vehicle: Vehicle;
   selected?: boolean;
+  photoURI?: string;
 }) {
   const { colors } = useTheme();
+  const [failedURI, setFailedURI] = useState<string | null>(null);
   const { t, locale } = useTranslation();
   return (
     <View
@@ -52,7 +56,27 @@ export function VehicleCard({
       >
         {vehicle.make} {vehicle.model}
       </Text>
-      <CarDrawing color={selected ? colors.heroMuted : colors.primary} />
+      <View
+        style={{
+          width: '100%',
+          aspectRatio: 16 / 9,
+          justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: radius.sm,
+        }}
+      >
+        {photoURI && photoURI !== failedURI ? (
+          <Image
+            source={{ uri: photoURI }}
+            accessibilityLabel={`${t('vehiclePhoto')}: ${vehicle.make} ${vehicle.model}`}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+            onError={() => setFailedURI(photoURI)}
+          />
+        ) : (
+          <CarDrawing color={selected ? colors.heroMuted : colors.primary} />
+        )}
+      </View>
       <View
         style={{ flexDirection: 'row', gap: 16, justifyContent: 'space-between', flexWrap: 'wrap' }}
       >

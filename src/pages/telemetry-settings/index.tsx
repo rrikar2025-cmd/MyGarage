@@ -6,7 +6,7 @@ export function TelemetrySettingsPage() {
   const { t } = useTranslation();
   return (
     <Screen
-      title={t('configureMetrics')}
+      title={t('dashboardMetrics')}
       action={<Button label={t('back')} variant="ghost" onPress={() => router.back()} />}
     >
       <TelemetrySettings />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
+import { AttachmentButton, useVehicleCovers } from '@/features/manage-attachments';
 import { useGarage, VehicleCard } from '@/entities/garage';
 import { useTranslation } from '@/shared/i18n';
 import {
@@ -17,6 +18,10 @@ import {
 export function GaragePage() {
   const { t } = useTranslation();
   const state = useGarage();
+  const covers = useVehicleCovers(
+    state.owner,
+    state.vehicles.map((v) => v.id),
+  );
   const [deleting, setDeleting] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const vehicle = state.vehicles.find((v) => v.id === deleting);
@@ -50,7 +55,11 @@ export function GaragePage() {
                 accessibilityState={{ selected: v.id === state.selectedId }}
                 onPress={() => state.select(v.id)}
               >
-                <VehicleCard vehicle={v} selected={v.id === state.selectedId} />
+                <VehicleCard
+                  vehicle={v}
+                  selected={v.id === state.selectedId}
+                  photoURI={covers[v.id]}
+                />
               </Pressable>
               <Card style={{ padding: 10 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -66,6 +75,8 @@ export function GaragePage() {
                   </View>
                   <Button label={t('delete')} variant="danger" onPress={() => setDeleting(v.id)} />
                 </View>
+
+                <AttachmentButton kind="vehicle" id={v.id} />
                 {v.id === state.selectedId && (
                   <Text variant="caption" style={{ textAlign: 'center' }}>
                     {t('activeVehicle')}

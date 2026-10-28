@@ -75,6 +75,7 @@ class ObdManager(private val context: Context) {
 
     private val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     private val uartProfiles = listOf(
+        UartProfile("fff0", "fff2", "fff1"),
         UartProfile("ffe0", "ffe1", "ffe1"),
         UartProfile("6e400001", "6e400002", "6e400003")
     )
@@ -495,10 +496,10 @@ class ObdManager(private val context: Context) {
 
     private companion object {
         const val SCAN_DURATION_MS = 12_000L
-        const val CONNECTION_TIMEOUT_MS = 25_000L
-        const val RESET_TIMEOUT_MS = 4_000L
+        const val CONNECTION_TIMEOUT_MS = 70_000L
+        const val RESET_TIMEOUT_MS = 8_000L
         const val COMMAND_TIMEOUT_MS = 2_500L
-        const val PROTOCOL_TIMEOUT_MS = 12_000L
+        const val PROTOCOL_TIMEOUT_MS = 20_000L
         const val CLEAR_TIMEOUT_MS = 8_000L
     }
 }

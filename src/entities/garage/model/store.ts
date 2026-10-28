@@ -1,3 +1,4 @@
+import { removeLocalVehicleCover } from '@/shared/media';
 import { create } from 'zustand';
 import { randomUUID } from 'expo-crypto';
 import { createSerialQueue } from '@/shared/lib';
@@ -42,13 +43,15 @@ function dataOnly(s: GarageData): GarageData {
     fuel: s.fuel,
     service: s.service,
     selectedId: s.selectedId,
+    mods: s.mods,
+    builds: s.builds,
   };
 }
 export const useGarage = create<GarageStore>((set, get) => {
-  async function mutate(
+  async function mutate<T extends { id: string }>(
     table: RecordTable,
-    record: { id: string },
-    transform: (data: GarageData) => GarageData,
+    record: T,
+    transform: (data: GarageData, canonical: T) => GarageData,
     remove = false,
   ) {
     const initial = get();
@@ -59,7 +62,7 @@ export const useGarage = create<GarageStore>((set, get) => {
       set({ busy: true });
       try {
         const current = get();
-        const next = transform(dataOnly(current));
+        let next = transform(dataOnly(current), record);
         if (
           table !== 'vehicles' &&
           !next.vehicles.some(
@@ -70,12 +73,15 @@ export const useGarage = create<GarageStore>((set, get) => {
           throw new Error('Vehicle not found');
         if (current.owner) {
           if (remove) await removeCloud(table, current.owner, record.id);
-          else await writeCloud(table, current.owner, record);
+          else {
+            const canonical = await writeCloud(table, current.owner, record);
+            next = transform(dataOnly(current), canonical);
+          }
         } else await saveGuest(next);
         if (get().generation !== generation) throw new Error('Garage session changed');
         set(next);
       } finally {
-        set({ busy: false });
+        if (get().generation === generation) set({ busy: false });
       }
     });
   }
@@ -116,29 +122,34 @@ export const useGarage = create<GarageStore>((set, get) => {
     saveVehicle: async (input, id, draftId) => {
       if (validateVehicle(input)) throw new Error('Invalid vehicle');
       const now = new Date().toISOString();
-      const existing = id ? get().vehicles.find((v) => v.id === id) : undefined;
+      const recordId = id ?? draftId ?? randomUUID();
+      const existing = get().vehicles.find((v) => v.id === recordId);
       if (id && !existing) throw new Error('Vehicle not found');
       const record = {
         ...input,
-        id: id ?? draftId ?? randomUUID(),
+        build_budget: existing?.build_budget ?? null,
+        id: recordId,
         created_at: existing?.created_at ?? now,
         updated_at: now,
       };
-      await mutate('vehicles', record, (s) => ({
+      await mutate('vehicles', record, (s, canonical) => ({
         ...s,
-        vehicles: existing
-          ? s.vehicles.map((v) => (v.id === id ? record : v))
-          : [...s.vehicles, record],
+        vehicles: s.vehicles.some((v) => v.id === recordId)
+          ? s.vehicles.map((v) => (v.id === recordId ? canonical : v))
+          : [...s.vehicles, canonical],
         selectedId: s.selectedId ?? record.id,
       }));
     },
-    deleteVehicle: async (id) =>
-      mutate(
+    deleteVehicle: async (id) => {
+      const local = !get().owner;
+      await mutate(
         'vehicles',
         { id },
         (s) => ({
           ...s,
           vehicles: s.vehicles.filter((v) => v.id !== id),
+          mods: s.mods.filter((x) => x.vehicle_id !== id),
+          builds: s.builds.filter((x) => x.vehicle_id !== id),
           scans: s.scans.filter((x) => x.vehicle_id !== id),
           fuel: s.fuel.filter((x) => x.vehicle_id !== id),
           service: s.service.filter((x) => x.vehicle_id !== id),
@@ -146,7 +157,9 @@ export const useGarage = create<GarageStore>((set, get) => {
             s.selectedId === id ? (s.vehicles.find((v) => v.id !== id)?.id ?? null) : s.selectedId,
         }),
         true,
-      ),
+      );
+      if (local) await removeLocalVehicleCover(id).catch(() => {});
+    },
     saveScan: async (scan) =>
       mutate('diagnostic_scans', scan, (s) => ({
         ...s,

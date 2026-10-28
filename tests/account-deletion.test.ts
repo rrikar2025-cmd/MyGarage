@@ -21,6 +21,8 @@ test('account deletion requires owner session, fresh password AMR and confirmati
       '202610280001_garage',
       '202610280002_logbook_details',
       '202610280003_account_deletion',
+      '202610280004_scan_context',
+      '202610280005_projects',
     ])
       await db.exec(
         await readFile(new URL(`../supabase/migrations/${name}.sql`, import.meta.url), 'utf8'),
@@ -38,6 +40,9 @@ test('account deletion requires owner session, fresh password AMR and confirmati
     await db.exec('set role authenticated;');
     await db.exec(
       `insert into vehicles(id,make,model,year) values ('${CAR}','Test','Owner',2020); insert into fuel_entries(id,vehicle_id,date,odometer,liters,total) values (gen_random_uuid(),'${CAR}','2026-10-01',1000,10,600); insert into service_entries(id,vehicle_id,date,odometer,title,category,total) values (gen_random_uuid(),'${CAR}','2026-10-01',1000,'Oil','oil',500); insert into diagnostic_scans(id,vehicle_id,stored,pending,permanent,metrics) values (gen_random_uuid(),'${CAR}','{}','{}','{}','{}');`,
+    );
+    await db.exec(
+      `insert into build_items(id,vehicle_id,title,category,cost) values ('75555555-5555-4555-8555-555555555555','${CAR}','Part','other',50); select install_build_item('75555555-5555-4555-8555-555555555555', (select updated_at from build_items where id='75555555-5555-4555-8555-555555555555'), '{"name":"Part","category":"other","cost":50,"installed_at":"2026-10-28"}');`,
     );
     await assert.rejects(db.exec(`select delete_own_account('WRONG','${A}')`));
     await assert.rejects(db.exec(`select delete_own_account('DELETE_MY_ACCOUNT','${B}')`));
@@ -63,6 +68,8 @@ test('account deletion requires owner session, fresh password AMR and confirmati
       'fuel_entries',
       'service_entries',
       'diagnostic_scans',
+      'modifications',
+      'build_items',
     ])
       assert.equal((await db.query(`select * from ${table}`)).rows.length, 0, table);
   } finally {

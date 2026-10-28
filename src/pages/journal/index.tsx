@@ -115,6 +115,12 @@ export function JournalPage() {
                   params: { kind: entry.kind, id: entry.data.id },
                 })
               }
+              onPhotos={() =>
+                router.push({
+                  pathname: '/attachments/[kind]/[id]',
+                  params: { kind: entry.kind, id: entry.data.id },
+                })
+              }
               onDelete={() => setDeleting(entry)}
             />
           ))}

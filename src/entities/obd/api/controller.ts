@@ -16,7 +16,8 @@ export async function searchAdapters() {
 export const getAdapters = () => obdNative.getDevices();
 export const stopAdapterSearch = () => (isOBDAvailable ? obdNative.stopScan() : Promise.resolve());
 export async function connectAdapter(device: OBDDevice) {
-  if (useOBD.getState().reading) throw new Error('OBD_BUSY');
+  if (useOBD.getState().reading || useOBD.getState().status === 'connecting')
+    throw new Error('OBD_BUSY');
   const epoch = ++connectionEpoch;
   useOBD.setState({
     status: 'connecting',

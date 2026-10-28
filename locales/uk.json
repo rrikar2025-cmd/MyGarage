@@ -1,4 +1,6 @@
 {
   "CFBundleDisplayName": "Мій гараж",
-  "NSBluetoothAlwaysUsageDescription": "Мій гараж використовує Bluetooth для підключення до OBD-II адаптера вашого автомобіля."
+  "NSBluetoothAlwaysUsageDescription": "Мій гараж використовує Bluetooth для підключення до OBD-II адаптера вашого автомобіля.",
+  "NSPhotoLibraryUsageDescription": "Оберіть фото для приватного гаража.",
+  "NSCameraUsageDescription": "Дозвольте камеру, щоб сфотографувати авто чи чек."
 }

@@ -2,23 +2,6 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-struct UARTProfile: Hashable {
-    let service: CBUUID
-    let txWrite: CBUUID
-    let rxNotify: CBUUID
-
-    static let nordic = UARTProfile(
-        service: CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"),
-        txWrite: CBUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"),
-        rxNotify: CBUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
-    )
-    static let hm10 = UARTProfile(
-        service: CBUUID(string: "FFE0"),
-        txWrite: CBUUID(string: "FFE1"),
-        rxNotify: CBUUID(string: "FFE1")
-    )
-}
-
 enum OBDPID: String, CaseIterable, Identifiable {
     case engineRPM = "010C"
     case vehicleSpeed = "010D"
@@ -63,6 +46,8 @@ struct BLEDevice: Identifiable, Equatable {
 }
 
 private enum OBDManagerError: LocalizedError {
+    case connectionTimedOut
+    case initializationTimedOut
     case bluetoothUnavailable
     case disconnected
     case uartUnavailable
@@ -78,18 +63,21 @@ private enum OBDManagerError: LocalizedError {
         case .invalidDiagnosticResponse: return "ECU diagnostic response unavailable"
         case .unsafeClear: return "CLEAR_UNSAFE: ECU must report zero RPM and zero speed"
         case .unconfirmedClear: return "CLEAR_UNCONFIRMED: no positive Mode 04 response"
-        case .bluetoothUnavailable: return "Bluetooth is unavailable"
+        case .connectionTimedOut: return "OBD_BLE_TIMEOUT: Bluetooth connection timed out"
+        case .initializationTimedOut: return "OBD_INIT_TIMEOUT: ELM/ECU initialization timed out"
+        case .bluetoothUnavailable: return "OBD_BLUETOOTH_UNAVAILABLE: Bluetooth is unavailable"
         case .disconnected: return "OBD adapter disconnected"
-        case .uartUnavailable: return "No compatible UART service found"
-        case .notificationsUnavailable: return "Could not enable UART notifications"
-        case .commandTimedOut(let command): return "ELM327 timed out on \(command)"
+        case .uartUnavailable: return "OBD_UART_UNAVAILABLE: No compatible UART service found"
+        case .notificationsUnavailable: return "OBD_NOTIFY_FAILED: Could not enable UART notifications"
+        case .commandTimedOut(let command): return "OBD_COMMAND_TIMEOUT_\(command): ELM327 command timed out"
         case .protocolNotDetected(let response):
-            return response.isEmpty ? "Vehicle protocol was not detected" : response
+            return "OBD_ECU_UNAVAILABLE: " + (response.isEmpty ? "Vehicle protocol was not detected" : response)
         }
     }
 }
 
 private struct QueuedCommand {
+    let id = UUID()
     let command: String
     let timeout: TimeInterval
     let completion: (Result<String, Error>) -> Void
@@ -120,7 +108,6 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     private var rxChar: CBCharacteristic?
     private var txChar: CBCharacteristic?
     private var writeType: CBCharacteristicWriteType = .withResponse
-    private let profiles: [UARTProfile] = [.nordic, .hm10]
     private var cleanupTimer: AnyCancellable?
     private var pendingServiceIDs = Set<CBUUID>()
     private var characteristicsByService: [CBUUID: [CBCharacteristic]] = [:]
@@ -132,6 +119,10 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     private var connectionTimeout: DispatchWorkItem?
     private var connectCompletion: ((Result<Bool, Error>) -> Void)?
     private var refreshingLive = false
+    private var connectionGeneration = 0
+    private var initializationStarted = false
+    private var connectionStage = "BLE"
+    private var pendingConnection: (device: BLEDevice, completion: (Result<Bool, Error>) -> Void)?
 
     private let livePIDs: [OBDPID] = [
         .engineRPM, .vehicleSpeed, .coolantTemp, .fuelLevel,
@@ -176,38 +167,73 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     func connect(_ device: BLEDevice, completion: @escaping (Result<Bool, Error>) -> Void) {
         disconnect()
         stopScan()
+        guard isPoweredOn else { completion(.failure(OBDManagerError.bluetoothUnavailable)); return }
+        if device.peripheral.state == .disconnecting {
+            // CoreBluetooth can deliver the previous cancellation after a retry starts.
+            pendingConnection = (device, completion)
+            armConnectionTimeout(ConnectionPolicy.transportTimeout, error: .connectionTimedOut)
+            return
+        }
+        beginConnection(device, completion: completion)
+    }
+
+    private func beginConnection(_ device: BLEDevice, completion: @escaping (Result<Bool, Error>) -> Void) {
+        connectionGeneration += 1
+        connectionStage = "BLE"
         connected = device.peripheral
         connected?.delegate = self
         connectCompletion = completion
         ready = false
+        initializationStarted = false
         status = "Connecting to \(device.name)…"
-        log("Connecting \(device.id)")
+        log("Connecting BLE adapter")
+        armConnectionTimeout(ConnectionPolicy.transportTimeout, error: .connectionTimedOut)
         central.connect(device.peripheral, options: nil)
+    }
+
+    private func armConnectionTimeout(_ seconds: TimeInterval, error: OBDManagerError) {
+        connectionTimeout?.cancel()
+        let generation = connectionGeneration
         let timeout = DispatchWorkItem { [weak self] in
-            guard let self, !self.ready, self.connectCompletion != nil else { return }
-            self.failConnection(OBDManagerError.commandTimedOut("connection"))
+            guard let self, generation == self.connectionGeneration, !self.ready,
+                  self.connectCompletion != nil || self.pendingConnection != nil else { return }
+            self.failConnection(error)
         }
         connectionTimeout = timeout
-        DispatchQueue.main.asyncAfter(deadline: .now() + 25, execute: timeout)
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: timeout)
     }
 
     func disconnect() {
+        endSession(OBDManagerError.disconnected)
+    }
+
+    private func endSession(_ error: Error) {
+        connectionGeneration += 1
         ready = false
         refreshingLive = false
-        failAllCommands(OBDManagerError.disconnected)
-        if let peripheral = connected {
-            central.cancelPeripheralConnection(peripheral)
-        }
+        initializationStarted = false
+        connectionTimeout?.cancel()
+        connectionTimeout = nil
+        let completion = connectCompletion
+        connectCompletion = nil
+        let pending = pendingConnection
+        pendingConnection = nil
+        let peripheral = connected
         connected = nil
         rxChar = nil
         txChar = nil
         pendingServiceIDs.removeAll()
         characteristicsByService.removeAll()
+        failAllCommands(error)
         readBuffer.removeAll(keepingCapacity: true)
+        if let peripheral { central.cancelPeripheralConnection(peripheral) }
+        completion?(.failure(error))
+        pending?.completion(.failure(error))
     }
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         isPoweredOn = central.state == .poweredOn
+        if !isPoweredOn && (connected != nil || pendingConnection != nil) { failConnection(OBDManagerError.bluetoothUnavailable) }
         status = isPoweredOn ? "Bluetooth On" : "Bluetooth Off"
         log("Bluetooth state: \(central.state.rawValue)")
     }
@@ -241,6 +267,8 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        guard peripheral === connected else { return }
+        connectionStage = "SERVICES"
         status = "Discovering services…"
         servicesLog.removeAll()
         log("BLE connected; discovering services")
@@ -248,25 +276,24 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        guard peripheral === connected else { return }
         failConnection(error ?? OBDManagerError.disconnected)
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        ready = false
-        connected = nil
-        rxChar = nil
-        txChar = nil
+        if let pending = pendingConnection, pending.device.peripheral === peripheral {
+            pendingConnection = nil
+            beginConnection(pending.device, completion: pending.completion)
+            return
+        }
+        guard peripheral === connected else { return }
         status = "Disconnected"
-        let reason = error ?? OBDManagerError.disconnected
-        log("Disconnected: \(reason.localizedDescription)")
-        failAllCommands(reason)
-        connectCompletion?(.failure(reason))
-        connectCompletion = nil
-        connectionTimeout?.cancel()
-        connectionTimeout = nil
+        log("BLE transport disconnected")
+        failConnection(error ?? OBDManagerError.disconnected)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        guard peripheral === connected else { return }
         if let error { failConnection(error); return }
         guard let services = peripheral.services, !services.isEmpty else {
             failConnection(OBDManagerError.uartUnavailable)
@@ -286,6 +313,7 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         didDiscoverCharacteristicsFor service: CBService,
         error: Error?
     ) {
+        guard peripheral === connected else { return }
         if let error { log("Characteristic discovery error: \(error.localizedDescription)") }
         let characteristics = service.characteristics ?? []
         characteristicsByService[service.uuid] = characteristics
@@ -298,27 +326,20 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     private func configureUART(on peripheral: CBPeripheral) {
-        var pair: (CBCharacteristic, CBCharacteristic)?
-
-        for profile in profiles {
-            guard let characteristics = characteristicsByService[profile.service] else { continue }
-            let write = characteristics.first { $0.uuid == profile.txWrite && $0.canWrite }
-            let notify = characteristics.first { $0.uuid == profile.rxNotify && $0.canNotify }
-            if let write, let notify { pair = (write, notify); break }
+        let services = characteristicsByService.map { id, channels in
+            UARTService(id: id.uuidString, channels: channels.map { UARTChannel(id: $0.uuid.uuidString, canWrite: $0.canWrite, canNotify: $0.canNotify) })
         }
-
-        if pair == nil {
-            for characteristics in characteristicsByService.values {
-                let write = characteristics.first { $0.canWrite }
-                let notify = characteristics.first { $0.canNotify }
-                if let write, let notify { pair = (write, notify); break }
-            }
+        guard let selected = ConnectionPolicy.selectUART(services),
+              let channels = characteristicsByService[CBUUID(string: selected.service)],
+              let write = channels.first(where: { $0.uuid == CBUUID(string: selected.write) }),
+              let notify = channels.first(where: { $0.uuid == CBUUID(string: selected.notify) }) else {
+            failConnection(OBDManagerError.uartUnavailable); return
         }
-
-        guard let pair else { failConnection(OBDManagerError.uartUnavailable); return }
+        let pair = (write, notify)
         txChar = pair.0
         rxChar = pair.1
         writeType = pair.0.properties.contains(.write) ? .withResponse : .withoutResponse
+        connectionStage = "NOTIFY"
         status = "Enabling notifications…"
         log("UART TX=\(pair.0.uuid), RX=\(pair.1.uuid)")
         peripheral.setNotifyValue(true, for: pair.1)
@@ -329,11 +350,15 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         didUpdateNotificationStateFor characteristic: CBCharacteristic,
         error: Error?
     ) {
+        guard peripheral === connected, characteristic == rxChar else { return }
         if let error { failConnection(error); return }
-        guard characteristic == rxChar, characteristic.isNotifying else {
+        guard characteristic.isNotifying else {
             failConnection(OBDManagerError.notificationsUnavailable)
             return
         }
+        guard !initializationStarted else { return }
+        initializationStarted = true
+        armConnectionTimeout(ConnectionPolicy.initializationTimeout, error: .initializationTimedOut)
         initializeELM()
     }
 
@@ -342,6 +367,7 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         didUpdateValueFor characteristic: CBCharacteristic,
         error: Error?
     ) {
+        guard peripheral === connected else { return }
         if let error { log("Notification error: \(error.localizedDescription)"); return }
         guard characteristic == rxChar, let data = characteristic.value else { return }
         readBuffer.append(data)
@@ -353,16 +379,20 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         didWriteValueFor characteristic: CBCharacteristic,
         error: Error?
     ) {
+        guard peripheral === connected, characteristic == txChar else { return }
         if let error {
             finishActiveCommand(.failure(error))
         }
     }
 
     private func initializeELM() {
+        connectionStage = "ELM"
         status = "Initializing ELM327…"
         let commands: [(String, TimeInterval)] = [
-            ("ATZ", 4), ("ATE0", 2.5), ("ATL0", 2.5), ("ATS1", 2.5),
-            ("ATH0", 2.5), ("ATSP0", 2.5), ("0100", 12)
+            ("ATZ", ConnectionPolicy.resetTimeout), ("ATE0", ConnectionPolicy.commandTimeout),
+            ("ATL0", ConnectionPolicy.commandTimeout), ("ATS1", ConnectionPolicy.commandTimeout),
+            ("ATH0", ConnectionPolicy.commandTimeout), ("ATSP0", ConnectionPolicy.commandTimeout),
+            ("0100", ConnectionPolicy.protocolTimeout)
         ]
         runSequence(commands, index: 0) { [weak self] result in
             guard let self else { return }
@@ -390,13 +420,16 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         guard index < commands.count else { completion(.success("")); return }
+        let generation = connectionGeneration
         let item = commands[index]
+        if item.0 == "0100" { connectionStage = "ECU" }
         execute(item.0, timeout: item.1) { [weak self] result in
+            guard let self, self.connectionGeneration == generation else { return }
             switch result {
             case .failure: completion(result)
             case .success(let response):
                 if index == commands.count - 1 { completion(.success(response)) }
-                else { self?.runSequence(commands, index: index + 1, completion: completion) }
+                else { self.runSequence(commands, index: index + 1, completion: completion) }
             }
         }
     }
@@ -417,6 +450,7 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
             return
         }
         let next = commandQueue.removeFirst()
+        let generation = connectionGeneration
         activeCommand = next
         readBuffer.removeAll(keepingCapacity: true)
         guard let data = "\(next.command)\r".data(using: .ascii) else {
@@ -427,7 +461,7 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         peripheral.writeValue(data, for: txChar, type: writeType)
 
         let timeoutWork = DispatchWorkItem { [weak self] in
-            guard let self, self.activeCommand?.command == next.command else { return }
+            guard let self, self.connectionGeneration == generation, self.activeCommand?.id == next.id else { return }
             self.finishActiveCommand(.failure(OBDManagerError.commandTimedOut(next.command)))
         }
         commandTimeout = timeoutWork
@@ -435,13 +469,10 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     private func processIncoming() {
-        let prompt = Data([UInt8(ascii: ">")])
-        while let range = readBuffer.range(of: prompt) {
-            let packet = readBuffer.subdata(in: 0..<range.lowerBound)
-            readBuffer.removeSubrange(0..<range.upperBound)
-            let text = String(data: packet, encoding: .ascii) ?? ""
-            finishActiveCommand(.success(text))
-        }
+        guard let response = ConnectionPolicy.responseBeforePrompt(readBuffer) else { return }
+        // Only one request was sent. Extra prompts in this notification predate the next request.
+        readBuffer.removeAll(keepingCapacity: true)
+        finishActiveCommand(.success(response))
     }
 
     private func finishActiveCommand(_ result: Result<String, Error>) {
@@ -677,17 +708,14 @@ final class OBDManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     private func failConnection(_ error: Error) {
-        ready = false
         status = "Connection failed"
-        log("Connection failed: \(error.localizedDescription)")
-        failAllCommands(error)
-        connectCompletion?(.failure(error))
-        connectCompletion = nil
-        connectionTimeout?.cancel()
-        connectionTimeout = nil
-        if let peripheral = connected {
-            central.cancelPeripheralConnection(peripheral)
-        }
+        let message = error.localizedDescription
+        let reason: Error = message.hasPrefix("OBD_") ? error : NSError(
+            domain: "MyGarage.OBD", code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "OBD_\(connectionStage)_FAILED: \(message)"]
+        )
+        log("Connection failed: \(reason.localizedDescription)")
+        endSession(reason)
     }
 
     private func dropStaleDevices() {
