@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ClearCodes } from '@/features/clear-codes';
-import { ConnectionPanel } from '@/features/connect-adapter';
+import { AdapterGuide, ConnectionPanel } from '@/features/connect-adapter';
 import { ScanVehicle } from '@/features/scan-vehicle';
 import { useGarage, useSelectedVehicle } from '@/entities/garage';
 import { useTranslation } from '@/shared/i18n';
@@ -30,6 +30,7 @@ export function DiagnosticsPage() {
       subtitle={vehicle ? `${vehicle.make} ${vehicle.model}` : t('scanScope')}
     >
       <ConnectionPanel />
+      <AdapterGuide />
       {loading ? (
         <Loading />
       ) : error ? (

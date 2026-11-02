@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { synchronizePushDevice } from '@/features/push-notifications';
 import { useSession } from '@/entities/session';
 import { useGarage } from '@/entities/garage';
+import { clearCachedCovers } from '@/entities/attachment';
 import { startTelemetry, stopAdapterSearch, disconnectAdapter } from '@/entities/obd';
 import { Loading } from '@/shared/ui';
 import { supabase } from '@/shared/api';
@@ -23,6 +24,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const garageOwner = useGarage((s) => s.owner);
   const ready = useSession((s) => s.ready);
   const owner = useSession((s) => s.session?.user.id ?? null);
+  useEffect(
+    () =>
+      useSession.subscribe((current, previous) => {
+        const previousOwner = previous.session?.user.id;
+        if (previousOwner && previousOwner !== current.session?.user.id)
+          void clearCachedCovers(previousOwner).catch(() => {});
+      }),
+    [],
+  );
   useEffect(() => {
     const handled = new Set<string>();
     const handleResponse = (response: Notifications.NotificationResponse | null) => {

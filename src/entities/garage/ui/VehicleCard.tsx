@@ -29,10 +29,12 @@ export function VehicleCard({
   vehicle,
   selected = false,
   photoURI,
+  joined = false,
 }: {
   vehicle: Vehicle;
   selected?: boolean;
   photoURI?: string;
+  joined?: boolean;
 }) {
   const { colors } = useTheme();
   const [failedURI, setFailedURI] = useState<string | null>(null);
@@ -42,6 +44,8 @@ export function VehicleCard({
       style={{
         backgroundColor: selected ? colors.hero : colors.surface,
         borderRadius: radius.lg,
+        borderBottomLeftRadius: joined ? 0 : radius.lg,
+        borderBottomRightRadius: joined ? 0 : radius.lg,
         padding: 24,
         gap: 8,
       }}

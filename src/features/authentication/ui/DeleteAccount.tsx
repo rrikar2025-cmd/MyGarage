@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { requireCloud } from '@/shared/api';
 import { useSession } from '@/entities/session';
 import { useGarage } from '@/entities/garage';
+import { clearCachedCovers } from '@/entities/attachment';
 import { disconnectAdapter } from '@/entities/obd';
 import { useTranslation } from '@/shared/i18n';
 import { useUnsavedChanges } from '@/shared/navigation';
@@ -37,6 +38,7 @@ export function DeleteAccount() {
       setDeleted(true);
       await disconnectAdapter().catch(() => {});
       await cloud.auth.signOut({ scope: 'local' });
+      await clearCachedCovers(session.user.id).catch(() => {});
     } catch {
       setPassword('');
       setConfirm(false);

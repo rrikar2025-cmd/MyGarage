@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import appVersion from '../../../app-version.json';
 import { router } from 'expo-router';
 import { useSession } from '@/entities/session';
 import { disconnectAdapter } from '@/entities/obd';
 import { ServiceReminderSetting, disablePushDevice } from '@/features/push-notifications';
+import { CommunitySupport } from '@/features/community-support';
 import { supabase } from '@/shared/api';
 import { isCloudConfigured } from '@/shared/config';
 import { usePreferences } from '@/shared/model';
@@ -34,6 +36,24 @@ export function SettingsPage() {
   }
   return (
     <Screen title={t('settings')}>
+      <Section title={t('cloud')}>
+        <Card>
+          <Text style={{ fontWeight: '700' }}>{t(session ? 'cloudMode' : 'localMode')}</Text>
+          {session && <Text muted>{session.user.email}</Text>}
+          <Text muted>{t(session ? 'cloudModeHint' : 'localModeHint')}</Text>
+          {!isCloudConfigured && <Notice>{t('cloudUnavailable')}</Notice>}
+          {session ? (
+            <Button label={t('signOut')} variant="danger" onPress={() => setConfirm(true)} />
+          ) : (
+            <Button
+              label={t('signIn')}
+              disabled={!isCloudConfigured}
+              onPress={() => router.push('/auth')}
+            />
+          )}
+          {error && <Notice tone="error">{t('authFailed')}</Notice>}
+        </Card>
+      </Section>
       <Section title={t('language')}>
         <Card>
           <Choice
@@ -76,24 +96,6 @@ export function SettingsPage() {
           onPress={() => router.push('/telemetry-settings')}
         />
       </Card>
-      <Section title={t('cloud')}>
-        <Card>
-          <Text style={{ fontWeight: '700' }}>{t(session ? 'cloudMode' : 'localMode')}</Text>
-          {session && <Text muted>{session.user.email}</Text>}
-          <Text muted>{t(session ? 'cloudModeHint' : 'localModeHint')}</Text>
-          {!isCloudConfigured && <Notice>{t('cloudUnavailable')}</Notice>}
-          {session ? (
-            <Button label={t('signOut')} variant="danger" onPress={() => setConfirm(true)} />
-          ) : (
-            <Button
-              label={t('signIn')}
-              disabled={!isCloudConfigured}
-              onPress={() => router.push('/auth')}
-            />
-          )}
-          {error && <Notice tone="error">{t('authFailed')}</Notice>}
-        </Card>
-      </Section>
       {session && (
         <Card>
           <Text variant="heading">{t('accountSecurity')}</Text>
@@ -109,13 +111,10 @@ export function SettingsPage() {
           />
         </Card>
       )}
-      <Card>
-        <Text variant="heading">{t('about')}</Text>
-        <Text muted>{t('aboutBody')}</Text>
-        <Text muted variant="caption">
-          {t('version')}
-        </Text>
-      </Card>
+      <CommunitySupport url="https://t.me/myGarage24" />
+      <Text muted variant="caption" style={{ textAlign: 'center' }}>
+        {t('version')} {Constants.expoConfig?.version ?? appVersion.versionName}
+      </Text>
       <Confirm
         visible={confirm}
         title={t('signOut')}

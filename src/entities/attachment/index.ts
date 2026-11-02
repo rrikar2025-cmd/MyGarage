@@ -7,3 +7,4 @@ export {
 } from './api/repository';
 
 export { loadCloudVehicleCovers } from './api/repository';
+export { clearCachedCovers } from './api/cover-cache';

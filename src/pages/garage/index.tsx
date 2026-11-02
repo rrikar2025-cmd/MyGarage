@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { AttachmentButton, useVehicleCovers } from '@/features/manage-attachments';
+import { useVehicleCovers } from '@/features/manage-attachments';
 import { useGarage, VehicleCard } from '@/entities/garage';
 import { useTranslation } from '@/shared/i18n';
+import { radius, useTheme } from '@/shared/theme';
 import {
   Button,
   Card,
@@ -17,6 +18,7 @@ import {
 } from '@/shared/ui';
 export function GaragePage() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const state = useGarage();
   const covers = useVehicleCovers(
     state.owner,
@@ -48,7 +50,16 @@ export function GaragePage() {
             <EmptyState title={t('noVehicles')} description={t('noVehiclesBody')} icon="truck" />
           )}
           {state.vehicles.map((v) => (
-            <View key={v.id} style={{ gap: 8 }}>
+            <View
+              key={v.id}
+              style={{
+                borderRadius: radius.lg,
+                borderWidth: v.id === state.selectedId ? 2 : 1,
+                borderColor: v.id === state.selectedId ? colors.primary : colors.border,
+                overflow: 'hidden',
+                backgroundColor: colors.surface,
+              }}
+            >
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${t('select')}: ${v.make} ${v.model}`}
@@ -59,9 +70,10 @@ export function GaragePage() {
                   vehicle={v}
                   selected={v.id === state.selectedId}
                   photoURI={covers[v.id]}
+                  joined
                 />
               </Pressable>
-              <Card style={{ padding: 10 }}>
+              <Card style={{ padding: 10, borderRadius: 0, gap: 8 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1 }}>
                     <Button
@@ -76,9 +88,12 @@ export function GaragePage() {
                   <Button label={t('delete')} variant="danger" onPress={() => setDeleting(v.id)} />
                 </View>
 
-                <AttachmentButton kind="vehicle" id={v.id} />
                 {v.id === state.selectedId && (
-                  <Text variant="caption" style={{ textAlign: 'center' }}>
+                  <Text
+                    variant="caption"
+                    color={colors.primary}
+                    style={{ textAlign: 'center', fontWeight: '700' }}
+                  >
                     {t('activeVehicle')}
                   </Text>
                 )}

@@ -1,4 +1,6 @@
 import { latestVehiclePhotos } from '../model/vehicle-covers';
+import { readCachedCover, removeCachedCover, writeCachedCover } from './cover-cache';
+import { resolveCloudCovers } from './resolve-covers';
 import { requireCloud } from '@/shared/api';
 import {
   PRIVATE_MEDIA_BUCKET,
@@ -102,11 +104,12 @@ export async function removeAttachment(owner: string, item: Pick<Attachment, 'id
     .eq('id', item.id)
     .eq('owner_id', owner);
   if (result.error) throw result.error;
+  await removeCachedCover({ owner, id: item.id, path: item.path }).catch(() => {});
 }
 
 export async function loadCloudVehicleCovers(owner: string, vehicleIds: string[]) {
   await ownerGuard(owner);
-  if (!vehicleIds.length) return {} as Record<string, string>;
+  if (!vehicleIds.length) return { urls: {}, release() {}, retrySoon: false };
   const { data, error } = await requireCloud()
     .from('garage_attachments')
     .select('*')
@@ -121,8 +124,16 @@ export async function loadCloudVehicleCovers(owner: string, vehicleIds: string[]
   if (error) throw error;
   await ownerGuard(owner);
   const covers = latestVehiclePhotos(owner, vehicleIds, data);
-  const urls = await signedPhotoURLs(owner, covers);
-  return Object.fromEntries(
-    covers.filter((row) => urls[row.path]).map((row) => [row.vehicle_id, urls[row.path]!]),
-  );
+  return resolveCloudCovers(owner, covers, {
+    guard: ownerGuard,
+    sign: signedPhotoURLs,
+    read: readCachedCover,
+    write: writeCachedCover,
+    remove: removeCachedCover,
+    async download(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Photo download failed');
+      return response.arrayBuffer();
+    },
+  });
 }

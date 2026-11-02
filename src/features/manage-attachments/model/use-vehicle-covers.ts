@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { loadCloudVehicleCovers } from '@/entities/attachment';
@@ -10,29 +10,42 @@ export function useVehicleCovers(owner: string | null, vehicleIds: string[]) {
     scope: '',
     urls: {},
   });
+  const cachedView = useRef<(LocalVehicleCovers & { scope: string }) | null>(null);
+  useEffect(
+    () => () => {
+      if (cachedView.current?.scope === scope) {
+        cachedView.current.release();
+        cachedView.current = null;
+      }
+    },
+    [scope],
+  );
   useFocusEffect(
     useCallback(() => {
       let active = true,
         pending = false,
-        local: LocalVehicleCovers | undefined;
+        retryTimer: ReturnType<typeof setTimeout> | undefined;
       const ids = idsKey ? idsKey.split(',') : [];
-      setResult({ scope, urls: {} });
       async function refresh() {
         if (!active || pending || !ids.length) return;
         pending = true;
         let loaded: LocalVehicleCovers | undefined;
         try {
-          const urls = owner
-            ? await loadCloudVehicleCovers(owner, ids)
-            : (loaded = await loadLocalVehicleCovers(ids)).urls;
+          const cloud = owner ? await loadCloudVehicleCovers(owner, ids) : undefined;
+          loaded = cloud ?? (await loadLocalVehicleCovers(ids));
           if (!active) {
             loaded?.release();
             return;
           }
-          const previous = local;
-          local = loaded;
-          setResult({ scope, urls });
+          const previous = cachedView.current;
+          cachedView.current = { ...loaded, scope };
+          setResult({ scope, urls: loaded.urls });
           previous?.release();
+          if (retryTimer) clearTimeout(retryTimer);
+          if (cloud?.retrySoon)
+            retryTimer = setTimeout(() => {
+              if (AppState.currentState === 'active') void refresh();
+            }, 45000);
         } catch {
           loaded?.release(); /* The card retains its illustration when a photo is unavailable. */
         } finally {
@@ -40,19 +53,13 @@ export function useVehicleCovers(owner: string | null, vehicleIds: string[]) {
         }
       }
       void refresh();
-      const timer = owner
-        ? setInterval(() => {
-            if (AppState.currentState === 'active') void refresh();
-          }, 45000)
-        : undefined;
       const sub = AppState.addEventListener('change', (state) => {
         if (state === 'active') void refresh();
       });
       return () => {
         active = false;
-        if (timer) clearInterval(timer);
+        if (retryTimer) clearTimeout(retryTimer);
         sub.remove();
-        local?.release();
       };
     }, [owner, idsKey, scope]),
   );

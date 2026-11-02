@@ -1,4 +1,14 @@
 export const en = {
+  adapterGuideTitle: 'What you need for diagnostics',
+  adapterGuideBody:
+    'Connect a compatible Bluetooth Low Energy (BLE) ELM327 OBD-II adapter to your vehicle’s OBD-II port.',
+  adapterGuideImage: 'Example of an ELM327 OBD-II adapter',
+  adapterGuideCompatibility:
+    'Example only. Check that the adapter supports BLE and is compatible with your phone and vehicle; similar-looking adapters may differ.',
+  communitySupport: 'Support',
+  communitySupportHint: 'Join the My Garage community on Telegram.',
+  communitySupportButton: 'Open Telegram community',
+  communitySupportError: 'Could not open Telegram. Check your connection and try again.',
   allBleDevices: 'All discovered BLE devices',
   likelyObdDevices: 'Possible OBD adapters',
   allBleDevicesHint:
@@ -210,9 +220,7 @@ export const en = {
   resetSent: 'If this email is registered, a password reset message will arrive shortly.',
   resetInfo:
     'Open the email link on this device and in the same app or browser where you requested it. You will be able to choose a new password.',
-  version: 'Version 0.6.0 · In development',
-  about: 'Built for your everyday drive',
-  aboutBody: 'Vehicle details, real OBD-II readings and a history you can return to.',
+  version: 'Version',
   privacyNote:
     'Only connect to a vehicle you are authorised to access. Diagnostic codes are a starting point for inspection.',
   mileageLabel: 'Mileage',

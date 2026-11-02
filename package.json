@@ -1,6 +1,6 @@
 {
   "name": "my-garage",
-  "version": "0.6.0",
+  "version": "1.0.1",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -42,6 +42,7 @@
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-system-ui": "~6.0.9",
+    "expo-updates": "~29.0.20",
     "obd": "file:./modules/obd",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -103,3 +103,7 @@ VehiclePhotoField reuses the existing camera/library preparation and canonical B
 ## BLE result and failure labels
 
 ConnectionPanel reuses existing Button, Notice and caption text. Separate likely OBD names from the optional full BLE scan; unknown devices are never presented as confirmed adapters. Keep a cancellation action available during connection. Failure copy tells users the failed stage and next action; a short failure code supports device retesting without exposing raw logs. The user requested code-only checks and will verify visuals; no browser QA is required for this change.
+
+## Garage vehicle cards
+
+Each garage vehicle has one rounded, unified card with its select area and edit/delete actions. The selected vehicle uses the hero treatment, primary outline and a text label; other cards use neutral surfaces and borders. Selection is also exposed through accessibility state. Vehicle photos are chosen in the editor; the garage card has no separate photo button. The overview and receipt gallery retain their existing entry points.

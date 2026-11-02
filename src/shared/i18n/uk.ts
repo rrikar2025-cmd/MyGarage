@@ -1,5 +1,15 @@
 import type { en } from './en';
 export const uk: Record<keyof typeof en, string> = {
+  adapterGuideTitle: 'Що потрібно для діагностики',
+  adapterGuideBody:
+    'Підключіть сумісний ELM327 OBD-II адаптер із Bluetooth Low Energy (BLE) до OBD-II роз’єму автомобіля.',
+  adapterGuideImage: 'Приклад OBD-II адаптера ELM327',
+  adapterGuideCompatibility:
+    'Фото для прикладу. Перевірте підтримку BLE та сумісність адаптера з телефоном і автомобілем: схожі моделі можуть відрізнятися.',
+  communitySupport: 'Підтримка',
+  communitySupportHint: 'Приєднуйтесь до спільноти «Мій гараж» у Telegram.',
+  communitySupportButton: 'Відкрити спільноту в Telegram',
+  communitySupportError: 'Не вдалося відкрити Telegram. Перевірте з’єднання та спробуйте ще раз.',
   allBleDevices: 'Усі знайдені BLE-пристрої',
   likelyObdDevices: 'Ймовірні OBD-адаптери',
   allBleDevicesHint:
@@ -216,9 +226,7 @@ export const uk: Record<keyof typeof en, string> = {
   resetSent: 'Якщо цю пошту зареєстровано, невдовзі надійде лист для відновлення пароля.',
   resetInfo:
     'Відкрийте посилання з листа на цьому пристрої, у тому самому застосунку чи браузері, де надіслали запит. Після цього встановіть новий пароль.',
-  version: 'Версія 0.6.0 · У розробці',
-  about: 'Для ваших щоденних поїздок',
-  aboutBody: 'Дані автомобіля, справжні показники OBD-II та історія, до якої зручно повертатися.',
+  version: 'Версія',
   privacyNote:
     'Підключайтеся лише до авто, до якого маєте дозвіл на доступ. Діагностичні коди — відправна точка для перевірки.',
   mileageLabel: 'Пробіг',
