@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
-import { useGarage, validateVehicle, type VehicleInput, type Vehicle } from '@/entities/garage';
+import {
+  useGarage,
+  validateVehicle,
+  vehicleMakes,
+  vehicleModels,
+  vehicleYears,
+  type VehicleInput,
+  type Vehicle,
+} from '@/entities/garage';
+import { VehicleAutocomplete } from './VehicleAutocomplete';
 import { useTranslation, type MessageKey } from '@/shared/i18n';
 import { useUnsavedChanges } from '@/shared/navigation';
 import { ReadVin } from '@/features/read-vin';
@@ -60,6 +69,7 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<MessageKey | null>(null);
+  const [openOptions, setOpenOptions] = useState<'make' | 'model' | 'year' | null>(null);
   const guard = useUnsavedChanges(
     !saved && (JSON.stringify(form) !== baseline || Boolean(photo.photo)),
     busy || photo.busy,
@@ -137,30 +147,46 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
       />
       {
         <Card>
-          <Field
+          <VehicleAutocomplete
             ref={first}
             label={t('make')}
             placeholder={t('makePlaceholder')}
             maxLength={60}
-            {...field('make')}
+            value={form.make}
+            options={vehicleMakes}
+            open={openOptions === 'make'}
+            disabled={busy || photo.busy}
+            onOpenChange={(open) => setOpenOptions(open ? 'make' : null)}
+            onChange={(value) => setForm((s) => ({ ...s, make: value }))}
           />
-          <Field
+          <VehicleAutocomplete
             ref={modelRef}
             label={t('model')}
             placeholder={t('modelPlaceholder')}
             maxLength={60}
-            {...field('model')}
+            value={form.model}
+            options={vehicleModels(form.make)}
+            open={openOptions === 'model'}
+            disabled={busy || photo.busy}
+            onOpenChange={(open) => setOpenOptions(open ? 'model' : null)}
+            onChange={(value) => setForm((s) => ({ ...s, model: value }))}
           />
-          <Field
+          <VehicleAutocomplete
             ref={yearRef}
             label={t('year')}
             placeholder={t('yearPlaceholder')}
             keyboardType="number-pad"
             maxLength={4}
-            {...field('year')}
+            value={form.year}
+            options={vehicleYears}
+            open={openOptions === 'year'}
+            disabled={busy || photo.busy}
+            onOpenChange={(open) => setOpenOptions(open ? 'year' : null)}
+            onChange={(value) => setForm((s) => ({ ...s, year: value }))}
           />
           <Field
             ref={mileageRef}
+            onFocus={() => setOpenOptions(null)}
             label={t('mileage')}
             placeholder={t('mileagePlaceholder')}
             keyboardType="number-pad"
@@ -169,6 +195,7 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
           />
           <Field
             ref={plateRef}
+            onFocus={() => setOpenOptions(null)}
             label={t('plate')}
             placeholder={t('platePlaceholder')}
             autoCapitalize="characters"
@@ -177,6 +204,7 @@ function VehicleForm({ existing }: { existing?: Vehicle }) {
           />
           <Field
             ref={vinRef}
+            onFocus={() => setOpenOptions(null)}
             label={t('vin')}
             autoCapitalize="characters"
             maxLength={17}

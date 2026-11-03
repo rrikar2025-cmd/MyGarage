@@ -258,3 +258,20 @@ test('CSV preserves Unicode, quotes and newlines and neutralises spreadsheet for
   assert.ok(csv.includes(`"'\n=1+1"`));
   assert.ok(csv.endsWith('\r\n'));
 });
+
+test('multi-category maintenance supersedes each category without duplicate reminders', () => {
+  const multi = service('combined', '2026-10-01', {
+    category: 'oil',
+    categories: ['oil', 'filters'],
+    next_odometer: 1500,
+  });
+  const results = getServiceSchedule([multi], 'a', 1000, now);
+  assert.equal(results.length, 1);
+  const newerOil = service('new-oil', '2026-10-02', { category: 'oil', next_odometer: null });
+  const newerFilters = service('new-filters', '2026-10-03', {
+    category: 'filters',
+    next_odometer: null,
+  });
+  assert.equal(getServiceSchedule([multi, newerOil], 'a', 1000, now).length, 1);
+  assert.equal(getServiceSchedule([multi, newerOil, newerFilters], 'a', 1000, now).length, 0);
+});

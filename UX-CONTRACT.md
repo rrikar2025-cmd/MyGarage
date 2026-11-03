@@ -56,7 +56,7 @@ The selected Supabase project is configured and migrations 001–010 were applie
 
 ## Diagnostics and telemetry 0.4.0
 
-- Scan scope is explicit: confirmed/stored only, or stored + pending + permanent. Optional failure stays unavailable; not-requested stays not-requested. At least one requested group must have a readable response for a result. No severity/occurrence count/health percentage is invented.
+- New scans request stored, pending and permanent standard engine codes. A failed group stays unavailable; historical not-requested groups stay not-requested. At least one requested group must have a readable response for a result. No severity/occurrence count/health percentage is invented.
 - The adapter's serialized operation owner handles scan, VIN, clear and foreground telemetry. A disconnect invalidates pending operations. An unsaved scan remains protected across disconnect/reconnect; clear is blocked until it is saved or explicitly discarded.
 - Each new scan stores context: mode, per-group status, VIN availability/value, duration, adapter label and live-snapshot time. Column 004 defaults legacy scans to an empty object. Old empty lists do not establish a successful ECU response. A VIN mismatch skips autosave and requires explicit confirmation naming the selected car and both VINs.
 - Native VIN decoding reassembles flat, ELM-indexed, ISO-TP and numbered legacy frames, including leading zero filler. Incomplete/out-of-order/ambiguous valid streams fail closed. DTC parsing preserves CAN count-byte handling, requires a positive response and rejects incomplete counted payloads. Multi-frame DTC completion beyond currently supported formats remains a device validation item; incomplete data is unavailable rather than clean.

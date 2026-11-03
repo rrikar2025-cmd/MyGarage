@@ -25,14 +25,16 @@ export function getServiceSchedule(
         b.id.localeCompare(a.id),
     );
   for (const row of sorted) {
-    const key =
-      row.category === 'other'
-        ? `other:${row.title.trim().toLowerCase().replace(/\s+/g, ' ')}`
-        : row.category;
-    if (!latest.has(key)) latest.set(key, row);
+    for (const category of row.categories?.length ? row.categories : [row.category]) {
+      const key =
+        category === 'other'
+          ? `other:${row.title.trim().toLowerCase().replace(/\s+/g, ' ')}`
+          : category;
+      if (!latest.has(key)) latest.set(key, row);
+    }
   }
   const reminders: ServiceReminder[] = [];
-  for (const entry of latest.values()) {
+  for (const entry of new Set(latest.values())) {
     if (entry.next_odometer === null && !entry.next_date) continue;
     const remainingKm = entry.next_odometer === null ? null : entry.next_odometer - mileage;
     const remainingDays = entry.next_date ? daysBetween(today, entry.next_date) : null;

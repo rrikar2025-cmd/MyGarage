@@ -4,7 +4,6 @@ import {
   shiftReportPeriod,
   localDate,
   type ReportPeriod,
-  type ReportMode,
 } from '@/entities/garage';
 import { useTranslation } from '@/shared/i18n';
 import { Button, Text } from '@/shared/ui';
@@ -30,10 +29,10 @@ export function PeriodSelector({
         accessibilityLabel={t('reportPeriod')}
         style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
       >
-        {(['month', 'year', 'last30', 'last12'] as ReportMode[]).map((mode) => (
+        {(['month', 'year'] as const).map((mode) => (
           <Button
             key={mode}
-            label={t(mode === 'month' ? 'byMonth' : mode === 'year' ? 'byYear' : mode)}
+            label={t(mode === 'month' ? 'byMonth' : 'byYear')}
             variant={period.mode === mode ? 'secondary' : 'ghost'}
             accessibilityState={{ selected: period.mode === mode }}
             onPress={() => onChange({ ...period, mode })}
@@ -49,7 +48,6 @@ export function PeriodSelector({
             <View style={{ flex: 1 }}>
               <Button
                 label={t('previousPeriod')}
-                icon="chevron-left"
                 variant="ghost"
                 disabled={getReportRange(previous).from < '1886-01-01'}
                 onPress={() => onChange(previous)}
@@ -58,7 +56,6 @@ export function PeriodSelector({
             <View style={{ flex: 1 }}>
               <Button
                 label={t('nextPeriod')}
-                icon="chevron-right"
                 variant="ghost"
                 disabled={getReportRange(next).from > today}
                 onPress={() => onChange(next)}

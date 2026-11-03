@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import appVersion from '../../../app-version.json';
 import { router } from 'expo-router';
 import { useSession } from '@/entities/session';
@@ -11,11 +12,18 @@ import { isCloudConfigured } from '@/shared/config';
 import { usePreferences } from '@/shared/model';
 import { useTranslation } from '@/shared/i18n';
 import { Button, Card, Choice, Confirm, Notice, Screen, Section, Text } from '@/shared/ui';
+import { resolveAppVersion } from './app-version';
 export function SettingsPage() {
   const { t } = useTranslation();
   const locale = usePreferences((s) => s.locale);
   const theme = usePreferences((s) => s.theme);
   const session = useSession((s) => s.session);
+  const displayedVersion = resolveAppVersion(
+    () => require('expo-application').nativeApplicationVersion,
+    Platform.OS === 'web'
+      ? (Constants.expoConfig?.version ?? appVersion.versionName)
+      : t('versionUnavailable'),
+  );
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -41,17 +49,14 @@ export function SettingsPage() {
           <Text style={{ fontWeight: '700' }}>{t(session ? 'cloudMode' : 'localMode')}</Text>
           {session && <Text muted>{session.user.email}</Text>}
           <Text muted>{t(session ? 'cloudModeHint' : 'localModeHint')}</Text>
-          {!isCloudConfigured && <Notice>{t('cloudUnavailable')}</Notice>}
-          {session ? (
-            <Button label={t('signOut')} variant="danger" onPress={() => setConfirm(true)} />
-          ) : (
+          {!session && !isCloudConfigured && <Notice>{t('cloudUnavailable')}</Notice>}
+          {!session && (
             <Button
               label={t('signIn')}
               disabled={!isCloudConfigured}
               onPress={() => router.push('/auth')}
             />
           )}
-          {error && <Notice tone="error">{t('authFailed')}</Notice>}
         </Card>
       </Section>
       <Section title={t('language')}>
@@ -109,11 +114,13 @@ export function SettingsPage() {
             variant="ghost"
             onPress={() => router.push('/account-delete')}
           />
+          <Button label={t('signOut')} variant="danger" onPress={() => setConfirm(true)} />
+          {error && <Notice tone="error">{t('authFailed')}</Notice>}
         </Card>
       )}
       <CommunitySupport url="https://t.me/myGarage24" />
       <Text muted variant="caption" style={{ textAlign: 'center' }}>
-        {t('version')} {Constants.expoConfig?.version ?? appVersion.versionName}
+        {t('version')} {displayedVersion}
       </Text>
       <Confirm
         visible={confirm}

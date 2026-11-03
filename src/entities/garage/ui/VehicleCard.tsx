@@ -43,9 +43,7 @@ export function VehicleCard({
     <View
       style={{
         backgroundColor: selected ? colors.hero : colors.surface,
-        borderRadius: radius.lg,
-        borderBottomLeftRadius: joined ? 0 : radius.lg,
-        borderBottomRightRadius: joined ? 0 : radius.lg,
+        borderRadius: joined ? 0 : radius.lg,
         padding: 24,
         gap: 8,
       }}

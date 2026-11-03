@@ -109,6 +109,10 @@ export const uk: Record<keyof typeof en, string> = {
   makePlaceholder: 'Наприклад, Volkswagen',
   modelPlaceholder: 'Наприклад, Golf',
   yearPlaceholder: 'Наприклад, 2018',
+  showOptions: 'Показати варіанти',
+  closeOptions: 'Закрити список',
+  serviceCategoriesHint: 'Оберіть одну або кілька категорій.',
+  noVehicleOptions: 'Немає відповідних варіантів. Можна ввести власне значення.',
   mileagePlaceholder: 'Наприклад, 85000',
   platePlaceholder: 'AA 1234 BB',
   saveVehicle: 'Зберегти авто',
@@ -159,7 +163,7 @@ export const uk: Record<keyof typeof en, string> = {
   scanCar: 'Зчитати коди помилок',
   scanning: 'Зчитуємо коди помилок…',
   scanHint:
-    'Виберіть групи стандартних OBD-кодів двигуна для запиту. Це не повна перевірка всіх систем автомобіля.',
+    'Застосунок перевірить збережені, очікувані та постійні OBD-коди двигуна. Це не перевірка всіх систем автомобіля.',
   scanFailed:
     'Не вдалося завершити сканування. Залиште запалювання ввімкненим, перевірте підключення та спробуйте ще.',
   noScans: 'Сканувань ще немає',
@@ -186,8 +190,7 @@ export const uk: Record<keyof typeof en, string> = {
   localModeHint:
     'Автомобілі й сканування гостя залишаються на цьому пристрої. Після входу відкривається окремий хмарний гараж; дані гостя автоматично не завантажуються.',
   cloudMode: 'Хмарний гараж',
-  cloudModeHint:
-    'Ваш гараж зберігається в акаунті Supabase. Для завантаження та збереження потрібен інтернет.',
+  cloudModeHint: 'Ваш гараж зберігається у хмарі.',
   cloudUnavailable: 'Хмарний вхід ще не налаштовано. Локальним гаражем уже можна користуватися.',
   servicePushNativeOnly: 'Push-нагадування доступні у встановленому застосунку на iOS та Android.',
   servicePushTitle: 'Push-нагадування про ТО',
@@ -435,6 +438,9 @@ export const uk: Record<keyof typeof en, string> = {
     'У старому записі немає статусу запиту. Порожній список не підтверджує успішної відповіді ECU.',
   groupNoCodes: 'У цій групі кодів не отримано.',
   showMore: 'Показати ще',
+  expandLiveData: 'Розгорнути',
+  versionUnavailable: 'недоступна',
+  collapseLiveData: 'Згорнути',
   minimum: 'Мінімум',
   maximum: 'Максимум',
   telemetryDashboard: 'Панель показників',

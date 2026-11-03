@@ -3,18 +3,16 @@ import { router } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
 import { useGarage, useSelectedVehicle, type DiagnosticScan } from '@/entities/garage';
 import { useOBD, readFaultCodes, disconnectAdapter, vinMismatch, CodeGroup } from '@/entities/obd';
-import type { ScanMode } from '@/shared/types';
 import { useTranslation } from '@/shared/i18n';
 import { useUnsavedChanges } from '@/shared/navigation';
 import { formatDate } from '@/shared/lib';
-import { Text, Button, Card, Notice, Section, Choice, Toggle, Confirm } from '@/shared/ui';
+import { Text, Button, Card, Notice, Section, Toggle, Confirm } from '@/shared/ui';
 export function ScanVehicle() {
   const { t, locale } = useTranslation();
   const vehicle = useSelectedVehicle();
   const connected = useOBD((s) => s.status === 'connected');
   const reading = useOBD((s) => s.reading);
   const clearedAt = useOBD((s) => s.codesClearedAt);
-  const [mode, setMode] = useState<ScanMode>('all');
   const [includeVin, setIncludeVin] = useState(true);
   const [busy, setBusy] = useState(false);
   const [snapshot, setSnapshot] = useState<DiagnosticScan | null>(null);
@@ -53,7 +51,7 @@ export function ScanVehicle() {
         id: randomUUID(),
         vehicle_id: vehicleId,
         created_at: new Date().toISOString(),
-        ...(await readFaultCodes(mode, includeVin)),
+        ...(await readFaultCodes('all', includeVin)),
       };
       if (generation !== useGarage.getState().generation) return;
       result.created_at = new Date().toISOString();
@@ -84,16 +82,6 @@ export function ScanVehicle() {
       <Text muted variant="caption">
         {t('scanHint')}
       </Text>
-      <Choice
-        label={t('scanMode')}
-        value={mode}
-        options={[
-          { value: 'confirmed', label: t('scanConfirmedMode') },
-          { value: 'all', label: t('scanAllMode') },
-        ]}
-        onChange={setMode}
-        disabled={busy || reading}
-      />
       <Toggle
         label={t('includeVin')}
         value={includeVin}

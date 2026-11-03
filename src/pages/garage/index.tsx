@@ -78,14 +78,16 @@ export function GaragePage() {
                   <View style={{ flex: 1 }}>
                     <Button
                       label={t('edit')}
-                      variant="ghost"
+                      variant="secondary"
                       icon="edit-2"
                       onPress={() =>
                         router.push({ pathname: '/vehicle/[id]', params: { id: v.id } })
                       }
                     />
                   </View>
-                  <Button label={t('delete')} variant="danger" onPress={() => setDeleting(v.id)} />
+                  <View style={{ flex: 1 }}>
+                    <Button label={t('delete')} variant="danger" onPress={() => setDeleting(v.id)} />
+                  </View>
                 </View>
 
                 {v.id === state.selectedId && (

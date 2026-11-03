@@ -14,55 +14,80 @@ export function LiveTelemetry({ charts = false }: { charts?: boolean }) {
   const reading = useOBD((s) => s.reading);
   const keys = usePreferences((s) => s.dashboardMetrics);
   const units = usePreferences((s) => s.units);
+  const [expanded, setExpanded] = useState(false);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
+    if (!charts && !expanded) return;
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [charts, expanded]);
   const stale = !updatedAt || now - Date.parse(updatedAt) > 15000;
   return (
-    <Section title={t('liveData')}>
-      <Notice>
-        {t(
-          status !== 'connected'
-            ? 'liveHint'
-            : reading
-              ? 'telemetryPaused'
-              : stale
-                ? 'telemetryStale'
-                : 'telemetryLive',
-        )}
-      </Notice>
-      {updatedAt && (
-        <Text muted variant="caption">
-          {t('lastReading')}: {formatDate(updatedAt, locale)}
-        </Text>
-      )}
-      <MetricGrid keys={keys} metrics={status === 'connected' ? metrics : {}} units={units} />
-      {charts && (
+    <Section
+      title={t('liveData')}
+      action={
+        !charts ? (
+          <Button
+            label={t(expanded ? 'collapseLiveData' : 'expandLiveData')}
+            accessibilityLabel={`${t('liveData')}: ${t(expanded ? 'collapseLiveData' : 'expandLiveData')}`}
+            accessibilityState={{ expanded }}
+            variant="ghost"
+            onPress={() => setExpanded((value) => !value)}
+          />
+        ) : undefined
+      }
+    >
+      {(charts || expanded) && (
         <>
-          <Text muted variant="caption">
-            {t('trendHint')}
-          </Text>
-          {status === 'connected' &&
-            keys.map((key) => (
-              <MetricTrend key={key} metricKey={key} units={units} samples={samples} />
-            ))}
+          <Notice>
+            {t(
+              status !== 'connected'
+                ? 'liveHint'
+                : reading
+                  ? 'telemetryPaused'
+                  : stale
+                    ? 'telemetryStale'
+                    : 'telemetryLive',
+            )}
+          </Notice>
+          {updatedAt && (
+            <Text muted variant="caption">
+              {t('lastReading')}: {formatDate(updatedAt, locale)}
+            </Text>
+          )}
+          <MetricGrid
+            keys={keys}
+            metrics={status === 'connected' ? metrics : {}}
+            units={units}
+            compact={!charts}
+          />
+          {charts && (
+            <>
+              <Text muted variant="caption">
+                {t('trendHint')}
+              </Text>
+              {status === 'connected' &&
+                keys.map((key) => (
+                  <MetricTrend key={key} metricKey={key} units={units} samples={samples} />
+                ))}
+            </>
+          )}
+          {!charts && (
+            <Button
+              label={t('telemetryDashboard')}
+              variant="secondary"
+              onPress={() => router.push('/telemetry')}
+            />
+          )}
+          {!charts && status !== 'connected' && (
+            <Button
+              label={t('connectAdapter')}
+              icon="bluetooth"
+              onPress={() => router.navigate('/diagnostics')}
+            />
+          )}
         </>
-      )}
-      {!charts && (
-        <Button
-          label={t('telemetryDashboard')}
-          variant="secondary"
-          onPress={() => router.push('/telemetry')}
-        />
-      )}
-      {!charts && status !== 'connected' && (
-        <Button
-          label={t('connectAdapter')}
-          icon="bluetooth"
-          onPress={() => router.navigate('/diagnostics')}
-        />
       )}
     </Section>
   );

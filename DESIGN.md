@@ -106,4 +106,4 @@ ConnectionPanel reuses existing Button, Notice and caption text. Separate likely
 
 ## Garage vehicle cards
 
-Each garage vehicle has one rounded, unified card with its select area and edit/delete actions. The selected vehicle uses the hero treatment, primary outline and a text label; other cards use neutral surfaces and borders. Selection is also exposed through accessibility state. Vehicle photos are chosen in the editor; the garage card has no separate photo button. The overview and receipt gallery retain their existing entry points.
+Each garage vehicle has one rounded, unified card with its select area and edit/delete actions. The selected vehicle uses the hero treatment, primary outline and a text label; other cards use neutral surfaces and borders. Selection is also exposed through accessibility state. Vehicle photos are chosen in the editor; the garage card and overview have no separate photo button. Receipt gallery entry points remain available.

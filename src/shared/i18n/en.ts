@@ -105,6 +105,10 @@ export const en = {
   makePlaceholder: 'e.g. Volkswagen',
   modelPlaceholder: 'e.g. Golf',
   yearPlaceholder: 'e.g. 2018',
+  showOptions: 'Show options',
+  closeOptions: 'Close options',
+  serviceCategoriesHint: 'Select one or more categories.',
+  noVehicleOptions: 'No matching options. You can enter your own value.',
   mileagePlaceholder: 'e.g. 85000',
   platePlaceholder: 'AA 1234 BB',
   saveVehicle: 'Save vehicle',
@@ -154,7 +158,7 @@ export const en = {
   scanCar: 'Read fault codes',
   scanning: 'Reading fault codes…',
   scanHint:
-    'Choose which standard OBD engine-code groups to request. This is not a full inspection of every vehicle system.',
+    'The app checks stored, pending and permanent OBD engine codes. This does not inspect every vehicle system.',
   scanFailed:
     'The scan could not finish. Keep the ignition on, check the connection and try again.',
   noScans: 'No scans yet',
@@ -181,8 +185,7 @@ export const en = {
   localModeHint:
     'Guest vehicles and scans stay on this device. Signing in opens a separate cloud garage; guest records are not uploaded automatically.',
   cloudMode: 'Cloud garage',
-  cloudModeHint:
-    'Your signed-in garage is stored in your Supabase account. An internet connection is needed to load and save it.',
+  cloudModeHint: 'Your garage is stored in the cloud.',
   cloudUnavailable: 'Cloud sign-in is not configured yet. Your local garage is ready to use.',
   servicePushNativeOnly: 'Push reminders are available in the installed iOS and Android app.',
   servicePushTitle: 'Service reminder notifications',
@@ -429,6 +432,9 @@ export const en = {
     'This older record does not contain the request status. An empty list does not confirm a successful ECU response.',
   groupNoCodes: 'No codes returned in this group.',
   showMore: 'Show more',
+  expandLiveData: 'Expand',
+  versionUnavailable: 'unavailable',
+  collapseLiveData: 'Collapse',
   minimum: 'Minimum',
   maximum: 'Maximum',
   telemetryDashboard: 'Live dashboard',

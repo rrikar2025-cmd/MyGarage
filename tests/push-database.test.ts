@@ -20,6 +20,7 @@ test('push schema scopes devices to live owner sessions, claims latest reminders
       '202610280002_logbook_details',
       '202610280006_push_reminders',
       '202610280009_push_delivery_upgrade',
+      '202611030011_service_categories',
     ])
       await db.exec(
         await readFile(new URL(`../supabase/migrations/${name}.sql`, import.meta.url), 'utf8'),
@@ -50,6 +51,25 @@ test('push schema scopes devices to live owner sessions, claims latest reminders
  (gen_random_uuid(),'${CAR}','2026-10-02',1000,'New oil without reminder','oil',1,null,null),
  ('${FILTER}','${CAR}','2026-10-02',1000,'Filters','filters',1,'2026-11-01',3000),
  (gen_random_uuid(),'${CAR}','2026-10-02',1000,'Tire check','other',1,null,1400);`);
+    await db.exec(
+      `update service_entries set categories = array['filters','brakes'], categories_version = 1 where id='${FILTER}'`,
+    );
+    await assert.rejects(
+      db.exec(
+        `update service_entries set categories = array['filters','filters'] where id='${FILTER}'`,
+      ),
+    );
+    await db.exec(
+      `insert into service_entries(id,vehicle_id,date,odometer,title,category,total,next_date,next_odometer) values ('${FILTER}','${CAR}','2026-10-02',1000,'Filters edited by old app','filters',1,'2026-11-01',3000) on conflict(id) do update set title=excluded.title, category=excluded.category, categories=excluded.categories, categories_version=excluded.categories_version`,
+    );
+    assert.deepEqual(
+      (
+        await db.query<{ categories: string[] }>(
+          `select categories from service_entries where id='${FILTER}'`,
+        )
+      ).rows[0]?.categories,
+      ['filters', 'brakes'],
+    );
     await assert.rejects(db.exec(`select * from claim_service_reminders()`));
     await claims(B, SB);
     assert.equal((await db.query('select * from push_devices')).rows.length, 0);

@@ -1,4 +1,4 @@
-import { AttachmentButton, useVehicleCovers } from '@/features/manage-attachments';
+import { useVehicleCovers } from '@/features/manage-attachments';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useGarage, useSelectedVehicle, VehicleCard } from '@/entities/garage';
@@ -38,7 +38,6 @@ export function OverviewPage() {
       ) : (
         <>
           <VehicleCard vehicle={vehicle} selected photoURI={covers[vehicle.id]} />
-          <AttachmentButton kind="vehicle" id={vehicle.id} />
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
             <View style={{ flex: 1, minWidth: 150 }}>
               <Button

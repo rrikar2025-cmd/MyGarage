@@ -17,7 +17,7 @@ export type EntryDraft = {
   notes: string;
   next: string;
   nextDate: string;
-  category: ServiceCategory;
+  categories: ServiceCategory[];
 };
 export function createDraft(mileage: number, existing?: FuelEntry | ServiceEntry): EntryDraft {
   const service = existing && 'title' in existing ? existing : undefined;
@@ -33,7 +33,7 @@ export function createDraft(mileage: number, existing?: FuelEntry | ServiceEntry
     notes: service?.notes ?? '',
     next: String(service?.next_odometer ?? ''),
     nextDate: service?.next_date ?? '',
-    category: service?.category ?? 'oil',
+    categories: service?.categories?.length ? service.categories : [service?.category ?? 'oil'],
   };
 }
 export function buildEntry(
@@ -63,7 +63,9 @@ export function buildEntry(
         ...base,
         title: form.title.trim(),
         notes: form.notes.trim(),
-        category: form.category,
+        category: form.categories[0] ?? 'oil',
+        categories: form.categories,
+        categories_version: 1,
         next_odometer: form.next.trim() ? parseDecimal(form.next) : null,
         next_date: form.nextDate.trim() || null,
       };

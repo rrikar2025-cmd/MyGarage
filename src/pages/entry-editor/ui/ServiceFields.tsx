@@ -1,7 +1,8 @@
 import type { Ref } from 'react';
-import { TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { useTranslation } from '@/shared/i18n';
-import { Choice, Field, Text } from '@/shared/ui';
+import { Field, Text, Icon } from '@/shared/ui';
+import { radius, useTheme } from '@/shared/theme';
 import type { EntryDraft } from '../model/draft';
 import type { UpdateDraft } from './FuelFields';
 export function ServiceFields({
@@ -20,6 +21,7 @@ export function ServiceFields({
   busy: boolean;
 }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   return (
     <View style={{ gap: 18 }}>
       <Field
@@ -31,16 +33,48 @@ export function ServiceFields({
         editable={!busy}
       />
       <Text style={{ fontWeight: '600' }}>{t('category')}</Text>
-      <Choice
-        label={t('category')}
-        value={form.category}
-        disabled={busy}
-        onChange={(v) => update('category', v)}
-        options={(['oil', 'filters', 'tires', 'brakes', 'other'] as const).map((value) => ({
-          value,
-          label: t(value),
-        }))}
-      />
+      <Text muted variant="caption">
+        {t('serviceCategoriesHint')}
+      </Text>
+      {(['oil', 'filters', 'tires', 'brakes', 'other'] as const).map((value) => {
+        const checked = form.categories.includes(value);
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked, disabled: busy }}
+            accessibilityLabel={t(value)}
+            disabled={busy}
+            onPress={() =>
+              update(
+                'categories',
+                checked
+                  ? form.categories.length > 1
+                    ? form.categories.filter((item) => item !== value)
+                    : form.categories
+                  : [...form.categories, value],
+              )
+            }
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingHorizontal: 14,
+              paddingVertical: 14,
+              minHeight: 50,
+              borderRadius: radius.sm,
+              backgroundColor: checked ? colors.inset : 'transparent',
+            }}
+          >
+            <Text style={{ flex: 1, fontWeight: checked ? '600' : '400' }}>{t(value)}</Text>
+            <Icon
+              name={checked ? 'check-square' : 'square'}
+              size={20}
+              color={checked ? colors.primary : colors.muted}
+            />
+          </Pressable>
+        );
+      })}
       <Field
         ref={nextRef}
         error={issue === 'nextInvalid' ? t(issue) : undefined}

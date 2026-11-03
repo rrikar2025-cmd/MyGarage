@@ -1,6 +1,8 @@
 {
-  "CFBundleDisplayName": "My Garage",
-  "NSBluetoothAlwaysUsageDescription": "My Garage uses Bluetooth to connect to your vehicle’s OBD-II adapter.",
-  "NSPhotoLibraryUsageDescription": "Choose photos for your private garage.",
-  "NSCameraUsageDescription": "Allow camera access to photograph your vehicle or receipts."
+  "ios": {
+    "CFBundleDisplayName": "My Garage",
+    "NSBluetoothAlwaysUsageDescription": "My Garage uses Bluetooth to connect to your vehicle’s OBD-II adapter.",
+    "NSPhotoLibraryUsageDescription": "Choose photos for your private garage.",
+    "NSCameraUsageDescription": "Allow camera access to photograph your vehicle or receipts."
+  }
 }

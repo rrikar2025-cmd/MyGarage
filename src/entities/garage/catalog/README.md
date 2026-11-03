@@ -1,0 +1,1 @@
+Vehicle make/model suggestions are derived from [Global Vehicle Models List](https://github.com/serhatkildaci/global-car-models), MIT licensed; see LICENSE.txt. The catalogue is a convenience, not a complete or year-validated list. Users can enter unlisted values.

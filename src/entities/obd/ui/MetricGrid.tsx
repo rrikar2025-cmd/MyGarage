@@ -8,10 +8,12 @@ export function MetricGrid({
   keys,
   metrics,
   units,
+  compact = false,
 }: {
   keys: MetricKey[];
   metrics: Metrics;
   units: TelemetryUnits;
+  compact?: boolean;
 }) {
   const { t, locale } = useTranslation();
   const { width } = useWindowDimensions();
@@ -24,19 +26,39 @@ export function MetricGrid({
             ? '—'
             : formatNumber(metric.value, locale, metricCatalog[key].digits);
         return (
-          <Card key={key} style={{ flexBasis: width < 360 ? '100%' : '46%', flexGrow: 1, gap: 6 }}>
+          <Card
+            key={key}
+            style={{
+              flexBasis: width < 360 ? '100%' : '46%',
+              flexGrow: 1,
+              gap: compact ? 2 : 6,
+              ...(compact ? { padding: 12 } : {}),
+            }}
+          >
             <Text muted variant="caption">
               {t(metricCatalog[key].label)}
             </Text>
-            <Text
-              variant="data"
-              style={value.length > 7 ? { fontSize: 22, lineHeight: 30 } : undefined}
+            <View
+              style={
+                compact
+                  ? { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 6 }
+                  : undefined
+              }
             >
-              {value}
-            </Text>
-            <Text muted variant="caption">
-              {key === 'rpm' ? t('rpmUnit') : metric.unit === 'km/h' ? t('speedUnit') : metric.unit}
-            </Text>
+              <Text
+                variant="data"
+                style={compact || value.length > 7 ? { fontSize: 22, lineHeight: 30 } : undefined}
+              >
+                {value}
+              </Text>
+              <Text muted variant="caption">
+                {key === 'rpm'
+                  ? t('rpmUnit')
+                  : metric.unit === 'km/h'
+                    ? t('speedUnit')
+                    : metric.unit}
+              </Text>
+            </View>
           </Card>
         );
       })}

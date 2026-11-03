@@ -36,7 +36,16 @@ export function validateJournal(
       !entry.title.trim() ||
       entry.title.length > 120 ||
       entry.notes.length > 1000 ||
-      !['oil', 'filters', 'tires', 'brakes', 'other'].includes(entry.category)
+      !['oil', 'filters', 'tires', 'brakes', 'other'].includes(entry.category) ||
+      (entry.categories != null &&
+        (!Array.isArray(entry.categories) ||
+          entry.categories.length < 1 ||
+          entry.categories.length > 5 ||
+          new Set(entry.categories).size !== entry.categories.length ||
+          entry.categories[0] !== entry.category ||
+          entry.categories.some(
+            (category) => !['oil', 'filters', 'tires', 'brakes', 'other'].includes(category),
+          )))
     )
       return 'entryInvalid';
     if (

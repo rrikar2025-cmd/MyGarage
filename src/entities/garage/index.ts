@@ -35,3 +35,4 @@ export { buildJournalCsv } from './lib/csv';
 export type { CsvLabels } from './lib/csv';
 export { ServiceReminderCard } from './ui/ServiceReminderCard';
 export { JournalRow } from './ui/JournalRow';
+export { vehicleMakes, vehicleModels, vehicleYears } from './catalog';

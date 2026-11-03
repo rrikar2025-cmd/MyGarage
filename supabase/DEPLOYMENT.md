@@ -58,7 +58,7 @@ SQL was applied manually. Do **not** blindly run `db push` or initial schema aga
 ## Remaining device/release gates
 
 - Fresh development binary for notifications, image picker/manipulator and prior native OBD/sharing modules. Prebuild and JS/Hermes export passed; APK/IPA signing/build not performed in this stage, build numbers remain 1.
-- Android package `com.mygarage.mobile`: separate Firebase/FCM project/config and EAS FCM credentials still needed. No google-services.json is present; DriveSpecX credentials were not copied. The user explicitly chose to configure Firebase/FCM before the Android build; no setup is attempted at this stage.
+- Android package `com.mygarage24.mobile`: separate Firebase/FCM project/config and EAS FCM credentials still needed. No google-services.json is present; DriveSpecX credentials were not copied. The user explicitly chose to configure Firebase/FCM before the Android build; no setup is attempted at this stage.
 - iOS bundle `com.mygarage.mobile.garage`, EAS project `197a6135-fd34-4ba6-b39a-c30e889118cf` is configured. Earlier work recorded Apple App ID Push capability enabled; APNs provisioning and real delivery are not verified by this stage.
 - On physical iOS/Android: camera/library permission refusal, real image upload/view/retry/remove, foreground/background notification delivery/deep link, per-device disable/logout, invalid-token handling, account deletion with real stored files and user-entered credentials. Manual testing deferred until migration is complete as requested.
 - Production exact Auth redirects, privacy/support/store declarations, conflict handling and remaining roadmap items before publication. No store publication or paid subscription has occurred.

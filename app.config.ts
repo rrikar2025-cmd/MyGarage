@@ -25,7 +25,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    package: 'com.mygarage.mobile',
+    package: 'com.mygarage24.mobile',
     versionCode: version.androidVersionCode,
     edgeToEdgeEnabled: true,
     adaptiveIcon: { foregroundImage: './assets/icon.png', backgroundColor: '#173E46' },

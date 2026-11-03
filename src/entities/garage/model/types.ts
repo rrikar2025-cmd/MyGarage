@@ -45,6 +45,8 @@ export type ServiceEntry = {
   odometer: number;
   title: string;
   category: ServiceCategory;
+  categories?: ServiceCategory[] | null;
+  categories_version?: number | null;
   total: number;
   currency: 'UAH';
   next_odometer: number | null;
