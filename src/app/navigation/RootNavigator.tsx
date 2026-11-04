@@ -42,6 +42,7 @@ export function RootNavigator() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="vehicle/[id]" />
+        <Stack.Screen name="insurance/[id]" />
         <Stack.Screen name="entry/[kind]" />
         <Stack.Screen name="auth/index" />
         <Stack.Screen name="auth/callback" />

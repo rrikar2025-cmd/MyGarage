@@ -2,14 +2,21 @@ import { useEffect, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { synchronizePushDevice } from '@/features/push-notifications';
+import {
+  cancelOwnerInsuranceReminders,
+  reconcileInsuranceReminders,
+} from '@/features/insurance-reminders';
+import { initializeReview } from '@/features/request-store-review';
 import { useSession } from '@/entities/session';
 import { useGarage } from '@/entities/garage';
 import { clearCachedCovers } from '@/entities/attachment';
 import { startTelemetry, stopAdapterSearch, disconnectAdapter } from '@/entities/obd';
 import { Loading } from '@/shared/ui';
 import { supabase } from '@/shared/api';
+import { useTheme } from '@/shared/theme';
+import { usePreferences } from '@/shared/model';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -21,15 +28,25 @@ Notifications.setNotificationHandler({
 });
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
   const garageOwner = useGarage((s) => s.owner);
+  const vehicles = useGarage((s) => s.vehicles);
+  const garageLoading = useGarage((s) => s.loading);
+  const garageError = useGarage((s) => s.error);
+  const locale = usePreferences((s) => s.locale);
   const ready = useSession((s) => s.ready);
   const owner = useSession((s) => s.session?.user.id ?? null);
+  useEffect(() => {
+    void initializeReview().catch(() => {});
+  }, []);
   useEffect(
     () =>
       useSession.subscribe((current, previous) => {
         const previousOwner = previous.session?.user.id;
-        if (previousOwner && previousOwner !== current.session?.user.id)
+        if (previousOwner && previousOwner !== current.session?.user.id) {
           void clearCachedCovers(previousOwner).catch(() => {});
+          void cancelOwnerInsuranceReminders(previousOwner).catch(() => {});
+        }
       }),
     [],
   );
@@ -103,6 +120,21 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, [ready, owner]);
   useEffect(() => {
+    if (!ready || garageOwner !== owner || garageLoading || garageError) return;
+    const synchronize = () => {
+      void reconcileInsuranceReminders(
+        owner,
+        vehicles.map((vehicle) => vehicle.id),
+        locale,
+      ).catch(() => {});
+    };
+    synchronize();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') synchronize();
+    });
+    return () => subscription.remove();
+  }, [ready, garageOwner, owner, garageLoading, garageError, vehicles, locale]);
+  useEffect(() => {
     if (!owner || Platform.OS === 'web') return;
     const synchronize = () => {
       void synchronizePushDevice(owner).catch(() => {});
@@ -119,6 +151,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [owner]);
   useEffect(() => startTelemetry(), []);
   return (
-    <SafeAreaProvider>{ready && garageOwner !== owner ? <Loading /> : children}</SafeAreaProvider>
+    <SafeAreaProvider>
+      <SafeAreaView
+        edges={['top', 'left', 'right']}
+        style={{ flex: 1, backgroundColor: colors.background }}
+      >
+        {ready && garageOwner !== owner ? <Loading /> : children}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

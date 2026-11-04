@@ -1,4 +1,5 @@
 import { useVehicleCovers } from '@/features/manage-attachments';
+import { useStoreReviewPrompt } from '@/features/request-store-review';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useGarage, useSelectedVehicle, VehicleCard } from '@/entities/garage';
@@ -8,6 +9,7 @@ import { ExpenseSummary } from '@/widgets/expense-summary';
 import { useTranslation } from '@/shared/i18n';
 import { Text, Screen, Button, EmptyState, Loading, ErrorState } from '@/shared/ui';
 export function OverviewPage() {
+  useStoreReviewPrompt();
   const { t } = useTranslation();
   const vehicle = useSelectedVehicle();
   const loading = useGarage((s) => s.loading);

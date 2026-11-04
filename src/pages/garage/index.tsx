@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useVehicleCovers } from '@/features/manage-attachments';
+import { removeInsurance } from '@/entities/insurance';
+import { cancelInsuranceReminders } from '@/features/insurance-reminders';
 import { useGarage, VehicleCard } from '@/entities/garage';
 import { useTranslation } from '@/shared/i18n';
 import { radius, useTheme } from '@/shared/theme';
@@ -32,6 +34,10 @@ export function GaragePage() {
     setFailed(false);
     try {
       await state.deleteVehicle(deleting);
+      await Promise.all([
+        !state.owner ? removeInsurance(null, deleting) : Promise.resolve(),
+        cancelInsuranceReminders(state.owner, deleting),
+      ]).catch(() => {});
       setDeleting(null);
     } catch {
       setFailed(true);
@@ -86,9 +92,20 @@ export function GaragePage() {
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Button label={t('delete')} variant="danger" onPress={() => setDeleting(v.id)} />
+                    <Button
+                      label={t('delete')}
+                      variant="danger"
+                      onPress={() => setDeleting(v.id)}
+                    />
                   </View>
                 </View>
+
+                <Button
+                  label={t('insuranceTitle')}
+                  variant="secondary"
+                  icon="shield"
+                  onPress={() => router.push(`/insurance/${v.id}` as Href)}
+                />
 
                 {v.id === state.selectedId && (
                   <Text

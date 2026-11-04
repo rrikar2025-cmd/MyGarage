@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useGarage, useSelectedVehicle, type JournalEntry, JournalRow } from '@/entities/garage';
 import { ExpenseSummary } from '@/widgets/expense-summary';
+import { useStoreReviewPrompt } from '@/features/request-store-review';
 import { useTranslation } from '@/shared/i18n';
 import { formatNumber } from '@/shared/lib';
 import {
@@ -25,6 +26,7 @@ export function JournalPage() {
   const [limit, setLimit] = useState(20);
   const [deleting, setDeleting] = useState<JournalEntry | null>(null);
   const [failed, setFailed] = useState(false);
+  useStoreReviewPrompt();
   const entries = useMemo<JournalEntry[]>(
     () =>
       [

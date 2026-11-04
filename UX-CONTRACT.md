@@ -1,5 +1,12 @@
 # Observable interaction contract
 
+## Vehicle insurance
+
+- A vehicle has at most one current insurance policy, with an expiry date and optional insurer and policy number. Guests keep it locally; signed-in users save it in an owner-isolated cloud table with a composite vehicle/owner foreign key. Vehicle or account deletion cascades cloud policies; no guest data is uploaded on sign-in.
+- Insurance reminders are optional local notifications on the current device, scheduled at 09:00 local time 30 and 7 days before expiry. If the policy is already within seven days of expiry, the first reminder is scheduled shortly after enabling. A previously missed 30-day notification is not backdated. Expired policies cannot enable a new reminder.
+- Editing a policy reschedules its enabled local reminders; removing the policy, deleting the car, or signing out cancels the respective schedules when the device can complete the operation. On launch/foreground, enabled cloud reminders are reconciled against available cloud data; offline devices cannot learn of remote edits until synchronization succeeds. On web, insurance data is editable but scheduled notifications are unavailable. No FCM or server-side push is claimed for these reminders.
+- The user explicitly enables reminders on each device, including notification permission. Lock-screen content is generic and excludes policy numbers and vehicle details. Scheduling, permission, data sync, and actual delivery remain subject to system behavior and require physical-device verification.
+
 ## Sources
 
 Current user brief (2026-10-28): separate Expo project, FSD, Ukrainian/English, light/dark, Supabase, DriveSpecX capabilities over successive migration stages, with upgrades/build planning explicitly removed by the latest user decision, vehicle details, service log, refuelling and expense totals.

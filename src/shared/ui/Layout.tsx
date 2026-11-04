@@ -34,8 +34,8 @@ export function Screen({
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          paddingTop: insets.top + 16,
-          paddingBottom: 32,
+          paddingTop: 16,
+          paddingBottom: Math.max(32, insets.bottom),
           paddingHorizontal: 20,
           gap: 24,
           width: '100%',
